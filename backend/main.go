@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"expenses/handlers"
+	"expenses/logx"
 	"os"
 	"time"
 
@@ -12,10 +13,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
+func init() {
+	err := godotenv.Load()
+	if err != nil {
+		logx.Logger.Error(".env file not loaded, relying on system env")
+	}
+}
+
 func main() {
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
-	godotenv.Load()
 	h := server.Default(
 		server.WithHostPorts("127.0.0.1:8080"),
 	)
@@ -45,10 +52,12 @@ func RegisterGroupRoute(h *server.Hertz) {
 	auth := h.Group("/auth")
 	{
 		auth.POST("/register", handlers.RegisterHandler)
+		auth.GET("/oauth", handlers.OauthHandler)
+		auth.GET("/callback", handlers.OauthCallbackHandler)
 	}
 
 	protected := h.Group("/protected")
-	// protected.Use(AuthMiddleware())
+	protected.Use(AuthMiddleware())
 	{
 		protected.GET("/test", func(ctx context.Context, c *app.RequestContext) {
 			c.JSON(200, map[string]string{
