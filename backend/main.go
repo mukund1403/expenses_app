@@ -1,13 +1,11 @@
 package main
 
 import (
-	"context"
 	"expenses/handlers"
 	"expenses/logx"
 	"os"
 	"time"
 
-	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/hertz-contrib/cors"
 	"github.com/joho/godotenv"
@@ -56,14 +54,12 @@ func RegisterGroupRoute(h *server.Hertz) {
 		auth.GET("/callback", handlers.OauthCallbackHandler)
 	}
 
-	protected := h.Group("/protected")
-	protected.Use(AuthMiddleware())
+	transactions := h.Group("/transactions")
+	transactions.Use(AuthMiddleware())
 	{
-		protected.GET("/test", func(ctx context.Context, c *app.RequestContext) {
-			c.JSON(200, map[string]string{
-				"message": "you are in protected route",
-			})
-		})
+		transactions.GET("/", handlers.GetTransactionListHandler)
+		transactions.PUT("/", handlers.PutTransactionHandler)
+		transactions.POST("/", handlers.PostTransactionHandler)
 	}
 
 }

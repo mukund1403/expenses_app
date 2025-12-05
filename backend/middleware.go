@@ -33,9 +33,12 @@ func AuthMiddleware() app.HandlerFunc {
 		if err != nil {
 			logx.Logger.Error(err.Error())
 			c.Redirect(302, []byte(frontend+"/login"))
+			c.Abort()
+			return
 		}
 
-		if _, ok := token.Claims.(jwt.MapClaims); ok {
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			c.Set("user", claims)
 			logx.Logger.Debug("token valid")
 		} else {
 			logx.Logger.Error("token invalid")
