@@ -30,15 +30,15 @@ Proposed order for us:
 
 
 ### Features
-1. Display transaction by Name, Date-Time, Category, Amount
+1. Display transaction by merchant, Date-Time, Category, Amount
 2. Transactions are split by month
 3. User can Create a new transaction
-4. User can Modify/Update existing transaction (change any of Name, Date-Time, Category, Amount)
+4. User can Modify/Update existing transaction (change any of merchant, Date-Time, Category, Amount)
 5. User can search for specific transaction (v2.0)
 
 ### Backend connections and endpoint
 
-**1. Display transaction by Name, Date-Time, Category, Amount <br/>**
+**1. Display transaction by merchant, Date-Time, Category, Amount <br/>**
 - **Request:** <br/>
   - Route: `GET process.env.NEXT_PUBLIC_GOLANG_URL/transactions` <br/>
 **Note:** The specific user has deliberately not been included because backend should parse that info from http cookies. Let me know if we want a different method.
@@ -51,7 +51,7 @@ Proposed order for us:
     "transaction_list": [
       {
         "transaction_id":"102345",
-        "name":"LUCKIN COFFEE",
+        "merchant":"LUCKIN COFFEE",
         "amount":"1.23",
         "category":"dining",
         "datetime":"dd-mm-yy-hh-mm"
@@ -66,7 +66,7 @@ Proposed order for us:
   Params:
   ```
   {
-    "name":"LUCKIN COFFEE",
+    "merchant":"LUCKIN COFFEE",
     "amount":"1.23",
     "category":"dining",
     "datetime":"dd-mm-yy-hh-mm"
@@ -81,7 +81,7 @@ Proposed order for us:
       "message":"transaction successfully added",
       "transaction_details": {
           "transaction_id":"102345",
-          "name":"LUCKIN COFFEE",
+          "merchant":"LUCKIN COFFEE",
           "amount":"1.23",
           "category":"dining",
           "datetime":"dd-mm-yy-hh-mm"
