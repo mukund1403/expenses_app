@@ -54,7 +54,7 @@ Proposed order for us:
         "merchant":"LUCKIN COFFEE",
         "amount":"1.23",
         "category":"dining",
-        "datetime":"dd-mm-yy-hh-mm"
+        "datetime":ISOdatetimestring
       }
     ]
   }
@@ -69,7 +69,7 @@ Proposed order for us:
     "merchant":"LUCKIN COFFEE",
     "amount":"1.23",
     "category":"dining",
-    "datetime":"dd-mm-yy-hh-mm"
+    "datetime":ISOdatetimestring
   }
   ```
 
@@ -84,7 +84,7 @@ Proposed order for us:
           "merchant":"LUCKIN COFFEE",
           "amount":"1.23",
           "category":"dining",
-          "datetime":"dd-mm-yy-hh-mm"
+          "datetime":ISOdatetimestring
       }
     }
     ```
