@@ -5,6 +5,7 @@ import (
 	"errors"
 	"expenses/db"
 	"expenses/logx"
+	"fmt"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/golang-jwt/jwt/v5"
@@ -25,13 +26,13 @@ func GetTransactionListHandler(ctx context.Context, c *app.RequestContext) {
 	supabaseUser, err := getSupabaseUserFromContext(c)
 	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(400, map[string]string{"error": "error retrieving user details"})
+		c.JSON(400, map[string]string{"error": err.Error()})
 	}
 
 	transactionList, err := db.GetTransactionList(supabaseUser)
 	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(400, map[string]string{"error": "could not retrieve transaction list"})
+		c.JSON(400, map[string]string{"error": err.Error()})
 		return
 	}
 	c.JSON(200, GetTransactionResponse{
@@ -42,24 +43,83 @@ func GetTransactionListHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func PostTransactionHandler(ctx context.Context, c *app.RequestContext) {
+	supabaseUser, err := getSupabaseUserFromContext(c)
+	if err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": err.Error()})
+	}
+
 	var tx db.Transaction
 	if err := c.BindJSON(&tx); err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(400, map[string]string{"error": "JSON in body is corrupted"})
+		c.JSON(400, map[string]string{"error": err.Error()})
 		return
 	}
-	txDeets, err := db.PostTransaction(tx)
+	tx.UserId = supabaseUser.ID
+	fmt.Println("transaction is: ", tx)
+
+	txDeets, err := db.PostTransaction(supabaseUser, tx)
 	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(400, map[string]string{"error": "could not add new transaction"})
+		c.JSON(400, map[string]string{"error": err.Error()})
+		return
 	}
 	c.JSON(200, PostTransactionResponse{
-		TransactionDetails: txDeets,
+		Message:            "transaction added successfully",
+		TransactionDetails: *txDeets,
 	})
 }
 
 func PutTransactionHandler(ctx context.Context, c *app.RequestContext) {
+	supabaseUser, err := getSupabaseUserFromContext(c)
+	if err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": err.Error()})
+	}
 
+	var tx db.Transaction
+	if err := c.BindJSON(&tx); err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": err.Error()})
+		return
+	}
+
+	txDeets, err := db.PutTransaction(supabaseUser, tx)
+	if err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": fmt.Sprintf("could not modify transaction: %s", err.Error())})
+		return
+	}
+	c.JSON(200, PostTransactionResponse{
+		Message:            "transaction modified successfully",
+		TransactionDetails: *txDeets,
+	})
+}
+
+func DeleteTransactionHandler(ctx context.Context, c *app.RequestContext) {
+	supabaseUser, err := getSupabaseUserFromContext(c)
+	if err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": err.Error()})
+	}
+
+	var tx db.Transaction
+	if err := c.BindJSON(&tx); err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": err.Error()})
+		return
+	}
+
+	txDeets, err := db.DeleteTransaction(supabaseUser, tx)
+	if err != nil {
+		logx.Logger.Error(err.Error())
+		c.JSON(400, map[string]string{"error": fmt.Sprintf("could not delete transaction: %s", err.Error())})
+		return
+	}
+	c.JSON(200, PostTransactionResponse{
+		Message:            "transaction deleted successfully",
+		TransactionDetails: *txDeets,
+	})
 }
 
 func getSupabaseUserFromContext(c *app.RequestContext) (*db.SupabaseUser, error) {

@@ -69,6 +69,7 @@ Proposed order for us:
     "merchant":"LUCKIN COFFEE",
     "amount":"1.23",
     "category":"dining",
+    "account":"DBS card ending 0000",
     "datetime":ISOdatetimestring
   }
   ```
@@ -83,6 +84,7 @@ Proposed order for us:
           "transaction_id":"102345",
           "merchant":"LUCKIN COFFEE",
           "amount":"1.23",
+          "account":"DBS card ending 0000",
           "category":"dining",
           "datetime":ISOdatetimestring
       }

@@ -1,10 +1,12 @@
 package db
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"time"
@@ -13,19 +15,28 @@ import (
 type Transaction struct {
 	TransactionId string    `json:"transaction_id"`
 	UserId        string    `json:"user_id,omitempty"`
-	Merchant      string    `json:"merchant"`
-	Amount        float64   `json:"amount"`
-	Account       string    `json:"account"`
-	Category      string    `json:"category"`
-	DateTime      time.Time `json:"datetime"`
+	Merchant      string    `json:"merchant,omitempty"`
+	Amount        float64   `json:"amount,omitempty"`
+	Account       string    `json:"account,omitempty"`
+	Category      string    `json:"category,omitempty"`
+	DateTime      time.Time `json:"datetime,omitempty"`
+}
+
+// This struct is for when user wants to create tx
+// We want to send over the info but we should not try to insert transaction_id ourselves (it is auto created by supabase)
+type TransactionCreate struct {
+	UserId   string    `json:"user_id"`
+	Merchant string    `json:"merchant"`
+	Amount   float64   `json:"amount"`
+	Account  string    `json:"account"`
+	Category string    `json:"category"`
+	DateTime time.Time `json:"datetime"`
 }
 
 func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
-	// contact supabase with URL and wait for response
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseKey := os.Getenv("SUPABASE_KEY")
-	if supabaseURL == "" || supabaseKey == "" {
-		return nil, errors.New("SUPABASE_URL or SUPABASE_KEY not set")
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
 	}
 
 	getURL := fmt.Sprintf("%s/rest/v1/transactions?user_id=eq.%s&select=*", supabaseURL, user.ID)
@@ -51,6 +62,140 @@ func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
 
 }
 
-func PostTransaction(transaction Transaction) (Transaction, error) {
-	return Transaction{}, nil
+func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	createURL := fmt.Sprintf("%s/rest/v1/transactions", supabaseURL)
+	newTx := TransactionCreate{
+		UserId:   transaction.UserId,
+		Merchant: transaction.Merchant,
+		Amount:   transaction.Amount,
+		Account:  transaction.Account,
+		Category: transaction.Category,
+		DateTime: transaction.DateTime,
+	}
+
+	payloadBytes, _ := json.Marshal(newTx)
+
+	req2, _ := http.NewRequestWithContext(context.Background(), "POST", createURL, bytes.NewReader(payloadBytes))
+	req2.Header.Set("apikey", supabaseKey)
+	req2.Header.Set("Authorization", "Bearer "+supabaseKey)
+	req2.Header.Set("Content-Type", "application/json")
+	// ask supabase to return the inserted row
+	req2.Header.Set("Prefer", "return=representation")
+
+	resp2, err := http.DefaultClient.Do(req2)
+	if err != nil {
+		return nil, err
+	}
+	defer resp2.Body.Close()
+
+	if resp2.StatusCode < 200 || resp2.StatusCode >= 300 {
+		body2, _ := io.ReadAll(resp2.Body)
+		return nil, fmt.Errorf("supabase create transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
+	}
+
+	var arr []Transaction
+	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
+		return nil, err
+	}
+	if len(arr) <= 0 {
+		return nil, errors.New("supabase insert returned no user")
+	}
+	return &arr[0], nil
+}
+
+func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
+	}
+	if transaction.TransactionId == "" {
+		return nil, errors.New("no transaction id")
+	}
+
+	updateURL := fmt.Sprintf("%s/rest/v1/transactions?transaction_id=eq.%s", supabaseURL, transaction.TransactionId)
+
+	payloadBytes, _ := json.Marshal(transaction)
+
+	req2, _ := http.NewRequestWithContext(context.Background(), "PATCH", updateURL, bytes.NewReader(payloadBytes))
+	req2.Header.Set("apikey", supabaseKey)
+	req2.Header.Set("Authorization", "Bearer "+supabaseKey)
+	req2.Header.Set("Content-Type", "application/json")
+	// ask supabase to return the inserted row
+	req2.Header.Set("Prefer", "return=representation")
+
+	resp2, err := http.DefaultClient.Do(req2)
+	if err != nil {
+		return nil, err
+	}
+	defer resp2.Body.Close()
+
+	if resp2.StatusCode < 200 || resp2.StatusCode >= 300 {
+		body2, _ := io.ReadAll(resp2.Body)
+		return nil, fmt.Errorf("supabase update transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
+	}
+
+	var arr []Transaction
+	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
+		return nil, err
+	}
+	if len(arr) <= 0 {
+		return nil, errors.New("supabase did not update any transaction")
+	}
+	return &arr[0], nil
+
+}
+
+func DeleteTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
+	}
+	if transaction.TransactionId == "" {
+		return nil, errors.New("no transaction id")
+	}
+
+	deleteURL := fmt.Sprintf("%s/rest/v1/transactions?transaction_id=eq.%s", supabaseURL, transaction.TransactionId)
+
+	// payloadBytes, _ := json.Marshal(transaction)
+
+	req2, _ := http.NewRequestWithContext(context.Background(), "DELETE", deleteURL, nil)
+	req2.Header.Set("apikey", supabaseKey)
+	req2.Header.Set("Authorization", "Bearer "+supabaseKey)
+	req2.Header.Set("Content-Type", "application/json")
+	// ask supabase to return the inserted row
+	req2.Header.Set("Prefer", "return=representation")
+
+	resp2, err := http.DefaultClient.Do(req2)
+	if err != nil {
+		return nil, err
+	}
+	defer resp2.Body.Close()
+
+	if resp2.StatusCode < 200 || resp2.StatusCode >= 300 {
+		body2, _ := io.ReadAll(resp2.Body)
+		return nil, fmt.Errorf("supabase delete transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
+	}
+
+	var arr []Transaction
+	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
+		return nil, err
+	}
+	if len(arr) <= 0 {
+		return nil, errors.New("supabase did not delete the transaction")
+	}
+	return &arr[0], nil
+}
+
+func initSupabaseEnv() (string, string, error) {
+	supabaseURL := os.Getenv("SUPABASE_URL")
+	supabaseKey := os.Getenv("SUPABASE_KEY")
+	if supabaseURL == "" || supabaseKey == "" {
+		return "", "", errors.New("SUPABASE_URL or SUPABASE_KEY not set")
+	}
+	return supabaseURL, supabaseKey, nil
 }

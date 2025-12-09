@@ -60,6 +60,7 @@ func RegisterGroupRoute(h *server.Hertz) {
 		transactions.GET("/", handlers.GetTransactionListHandler)
 		transactions.PUT("/", handlers.PutTransactionHandler)
 		transactions.POST("/", handlers.PostTransactionHandler)
+		transactions.DELETE("/", handlers.DeleteTransactionHandler)
 	}
 
 }
