@@ -5,35 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"expenses/models"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
-	"time"
 )
 
-type Transaction struct {
-	TransactionId string    `json:"transaction_id"`
-	UserId        string    `json:"user_id,omitempty"`
-	Merchant      string    `json:"merchant,omitempty"`
-	Amount        float64   `json:"amount,omitempty"`
-	Account       string    `json:"account,omitempty"`
-	Category      string    `json:"category,omitempty"`
-	DateTime      time.Time `json:"datetime,omitempty"`
-}
-
-// This struct is for when user wants to create tx
-// We want to send over the info but we should not try to insert transaction_id ourselves (it is auto created by supabase)
-type TransactionCreate struct {
-	UserId   string    `json:"user_id"`
-	Merchant string    `json:"merchant"`
-	Amount   float64   `json:"amount"`
-	Account  string    `json:"account"`
-	Category string    `json:"category"`
-	DateTime time.Time `json:"datetime"`
-}
-
-func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
+func GetTransactionList(user *SupabaseUser) ([]models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -54,7 +33,7 @@ func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
 	if resp.StatusCode != 200 {
 		return nil, errors.New("error from supabase backend")
 	}
-	var transactionList []Transaction
+	var transactionList []models.Transaction
 	if err := json.NewDecoder(resp.Body).Decode(&transactionList); err != nil {
 		return nil, err
 	}
@@ -62,14 +41,14 @@ func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
 
 }
 
-func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+func PostTransaction(user *SupabaseUser, transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
 	}
 
 	createURL := fmt.Sprintf("%s/rest/v1/transactions", supabaseURL)
-	newTx := TransactionCreate{
+	newTx := models.TransactionCreate{
 		UserId:   transaction.UserId,
 		Merchant: transaction.Merchant,
 		Amount:   transaction.Amount,
@@ -98,7 +77,7 @@ func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction,
 		return nil, fmt.Errorf("supabase create transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
-	var arr []Transaction
+	var arr []models.Transaction
 	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
 		return nil, err
 	}
@@ -108,7 +87,7 @@ func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction,
 	return &arr[0], nil
 }
 
-func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+func PutTransaction(user *SupabaseUser, transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -139,7 +118,7 @@ func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, 
 		return nil, fmt.Errorf("supabase update transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
-	var arr []Transaction
+	var arr []models.Transaction
 	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
 		return nil, err
 	}
@@ -150,7 +129,7 @@ func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, 
 
 }
 
-func DeleteTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+func DeleteTransaction(user *SupabaseUser, transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -181,7 +160,7 @@ func DeleteTransaction(user *SupabaseUser, transaction Transaction) (*Transactio
 		return nil, fmt.Errorf("supabase delete transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
-	var arr []Transaction
+	var arr []models.Transaction
 	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
 		return nil, err
 	}

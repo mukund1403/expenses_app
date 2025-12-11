@@ -18,6 +18,7 @@ type SupabaseUser struct {
 	Name  string `json:"name,omitempty"`
 }
 
+// info only needs to have the email
 func GetSupabaseUser(ctx context.Context, info map[string]interface{}) (*SupabaseUser, error) {
 	emailVal, ok := info["email"].(string)
 	if !ok || emailVal == "" {
