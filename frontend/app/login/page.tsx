@@ -3,7 +3,7 @@
 export default function LoginPage() {
   const handleGoogleLogin = () => {
     // Just redirect to your backend OAuth start endpoint
-    window.location.href = "http://localhost:8080/auth/oauth";
+    window.location.href = `${process.env.NEXT_PUBLIC_GOLANG_URL}/auth/oauth`;
   };
 
   return (
