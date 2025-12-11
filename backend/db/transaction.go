@@ -48,16 +48,12 @@ func PostTransaction(user *SupabaseUser, transaction models.Transaction) (*model
 	}
 
 	createURL := fmt.Sprintf("%s/rest/v1/transactions", supabaseURL)
-	newTx := models.TransactionCreate{
-		UserId:   transaction.UserId,
-		Merchant: transaction.Merchant,
-		Amount:   transaction.Amount,
-		Account:  transaction.Account,
-		Category: transaction.Category,
-		DateTime: transaction.DateTime,
+	if transaction.UserId == "" || transaction.Merchant == "" || transaction.Amount == 0 ||
+		transaction.Account == "" || transaction.Category == "" || transaction.DateTime.IsZero() {
+		return nil, errors.New("one or more fields are empty")
 	}
 
-	payloadBytes, _ := json.Marshal(newTx)
+	payloadBytes, _ := json.Marshal(transaction)
 
 	req2, _ := http.NewRequestWithContext(context.Background(), "POST", createURL, bytes.NewReader(payloadBytes))
 	req2.Header.Set("apikey", supabaseKey)

@@ -10,28 +10,38 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+
+	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type SupabaseUser struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-	Name  string `json:"name,omitempty"`
+	ID       string `json:"id,omitempty"`
+	Email    string `json:"email"`
+	Name     string `json:"name,omitempty"`
+	Username string `json:"username,omitempty"`
 }
 
-// info only needs to have the email
+// info can be the email or username
 func GetSupabaseUser(ctx context.Context, info map[string]interface{}) (*SupabaseUser, error) {
-	emailVal, ok := info["email"].(string)
-	if !ok || emailVal == "" {
-		return nil, errors.New("google returned no email")
-	}
-
 	supabaseURL := os.Getenv("SUPABASE_URL")
 	supabaseKey := os.Getenv("SUPABASE_KEY")
 	if supabaseURL == "" || supabaseKey == "" {
 		return nil, errors.New("SUPABASE_URL or SUPABASE_KEY not set")
 	}
 
-	getURL := fmt.Sprintf("%s/rest/v1/users?email=eq.%s", supabaseURL, url.QueryEscape(emailVal))
+	var getURL string
+	// check if emailVal exists first then usernameVal
+	// if both dont exist throw error
+	if emailVal, ok := info["email"].(string); ok && emailVal != "" {
+		getURL = fmt.Sprintf("%s/rest/v1/users?email=eq.%s", supabaseURL, url.QueryEscape(emailVal))
+	} else {
+		if usernameVal, ok := info["username"].(string); ok && usernameVal != "" {
+			getURL = fmt.Sprintf("%s/rest/v1/users?username=eq.%s", supabaseURL, url.QueryEscape(usernameVal))
+		} else {
+			return nil, errors.New("cannot get supabase user. no email or username provided")
+		}
+	}
+
 	req, _ := http.NewRequestWithContext(ctx, "GET", getURL, nil)
 	req.Header.Set("apikey", supabaseKey)
 	req.Header.Set("Authorization", "Bearer "+supabaseKey)
@@ -72,11 +82,14 @@ func CreateSupabaseUser(ctx context.Context, info map[string]interface{}) (*Supa
 		name = n
 	}
 
+	username := generateUserName()
+
 	// 2) Create user via POST
 	createURL := fmt.Sprintf("%s/rest/v1/users", supabaseURL)
 	newUser := SupabaseUser{
-		Email: emailVal,
-		Name:  name,
+		Email:    emailVal,
+		Name:     name,
+		Username: username,
 	}
 	payloadBytes, _ := json.Marshal(newUser)
 
@@ -106,4 +119,11 @@ func CreateSupabaseUser(ctx context.Context, info map[string]interface{}) (*Supa
 		return nil, errors.New("supabase insert returned no user")
 	}
 	return &arr[0], nil
+}
+
+func generateUserName() string {
+	alphabet := "23456789abcdefghjkmnpqrstuvwxyz"
+	id, _ := gonanoid.Generate(alphabet, 12)
+	return id
+
 }

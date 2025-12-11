@@ -77,6 +77,7 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	}
 
 	user, err := db.GetSupabaseUser(ctx, userInfo)
+	isUserNew := false
 	if err != nil {
 		logx.Logger.Info("user does not exist. Creating...")
 		user, err = db.CreateSupabaseUser(ctx, userInfo)
@@ -84,6 +85,7 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 			logx.Logger.Error(err.Error())
 			c.JSON(500, map[string]string{"error": "unable to add user to supabase"})
 		}
+		isUserNew = true
 	} else {
 		logx.Logger.Info("user already exists")
 	}
@@ -91,7 +93,7 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	jwtStr, err := createAppJWT(user)
 	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(500, map[string]string{"error": "failed to create jwt", "detail": err.Error()})
+		c.JSON(500, map[string]string{"error": "unable to log user in. try again later."})
 		return
 	}
 
@@ -119,6 +121,12 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	logx.Logger.Info(fmt.Sprintf("user:%s, %s logged in successfully", user.Name, user.Email))
+
+	if isUserNew {
+		c.Redirect(302, []byte(frontend+"/settings/get_started"))
+		return
+	}
+
 	c.Redirect(302, []byte(frontend+"/home"))
 }
 
