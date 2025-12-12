@@ -9,16 +9,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 )
 
-func GetTransactionList(user *SupabaseUser) ([]models.Transaction, error) {
+func GetTransactionList(userID string) ([]models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
 	}
 
-	getURL := fmt.Sprintf("%s/rest/v1/transactions?user_id=eq.%s&select=*", supabaseURL, user.ID)
+	getURL := fmt.Sprintf("%s/rest/v1/transactions?user_id=eq.%s&select=*", supabaseURL, userID)
 	req, _ := http.NewRequestWithContext(context.Background(), "GET", getURL, nil)
 	req.Header.Set("apikey", supabaseKey)
 	req.Header.Set("Authorization", "Bearer "+supabaseKey)
@@ -41,7 +40,7 @@ func GetTransactionList(user *SupabaseUser) ([]models.Transaction, error) {
 
 }
 
-func PostTransaction(user *SupabaseUser, transaction models.Transaction) (*models.Transaction, error) {
+func PostTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -83,7 +82,7 @@ func PostTransaction(user *SupabaseUser, transaction models.Transaction) (*model
 	return &arr[0], nil
 }
 
-func PutTransaction(user *SupabaseUser, transaction models.Transaction) (*models.Transaction, error) {
+func PutTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -125,7 +124,7 @@ func PutTransaction(user *SupabaseUser, transaction models.Transaction) (*models
 
 }
 
-func DeleteTransaction(user *SupabaseUser, transaction models.Transaction) (*models.Transaction, error) {
+func DeleteTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -164,13 +163,4 @@ func DeleteTransaction(user *SupabaseUser, transaction models.Transaction) (*mod
 		return nil, errors.New("supabase did not delete the transaction")
 	}
 	return &arr[0], nil
-}
-
-func initSupabaseEnv() (string, string, error) {
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseKey := os.Getenv("SUPABASE_KEY")
-	if supabaseURL == "" || supabaseKey == "" {
-		return "", "", errors.New("SUPABASE_URL or SUPABASE_KEY not set")
-	}
-	return supabaseURL, supabaseKey, nil
 }

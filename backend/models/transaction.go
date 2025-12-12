@@ -10,5 +10,5 @@ type Transaction struct {
 	Currency      string    `json:"currency,omitempty"`
 	Account       string    `json:"account,omitempty"`
 	Category      string    `json:"category,omitempty"`
-	DateTime      time.Time `json:"datetime,omitempty"`
+	DateTime      time.Time `json:"datetime,omitzero"` // need to use omitzero for structs. omitempty does not work.
 }

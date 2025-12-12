@@ -21,8 +21,9 @@ func init() {
 func main() {
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
+	serverUrl := os.Getenv("GOLANG_SERVER")
 	h := server.Default(
-		server.WithHostPorts("127.0.0.1:8080"),
+		server.WithHostPorts(serverUrl),
 	)
 	corsAllowedDomain := []string{os.Getenv("CORS_ALLOWED_DOMAIN")}
 	h.Use(cors.New(cors.Config{
@@ -45,7 +46,7 @@ func main() {
 func RegisterGroupRoute(h *server.Hertz) {
 	auth := h.Group("/auth")
 	{
-		auth.POST("/register", handlers.RegisterHandler)
+		// auth.POST("/register", handlers.RegisterHandler)
 		auth.GET("/oauth", handlers.OauthHandler)
 		auth.GET("/callback", handlers.OauthCallbackHandler)
 	}
@@ -62,6 +63,15 @@ func RegisterGroupRoute(h *server.Hertz) {
 	resend := h.Group("/resend")
 	{
 		resend.POST("/webhook", handlers.PostWebhookHandler)
+
+	}
+
+	settings := h.Group("/settings")
+	settings.Use(AuthMiddleware())
+	{
+		settings.GET("/activation_link", handlers.ResendActivationLinkHandler)
+		settings.GET("/user_details", handlers.GetUserDetailsHandler)
+		settings.PUT("/user_details", handlers.PutUserDetailsHandler)
 	}
 
 }

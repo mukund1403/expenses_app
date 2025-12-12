@@ -5,41 +5,33 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"expenses/logx"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 
 	gonanoid "github.com/matoous/go-nanoid/v2"
 )
 
 type SupabaseUser struct {
-	ID       string `json:"id,omitempty"`
-	Email    string `json:"email"`
-	Name     string `json:"name,omitempty"`
-	Username string `json:"username,omitempty"`
+	ID             string `json:"id,omitempty"`    // cannot modify
+	Email          string `json:"email,omitempty"` // cannot modify
+	Name           string `json:"name,omitempty"`
+	Username       string `json:"username,omitempty"`        // cannot modify
+	ActivationLink string `json:"activation_link,omitempty"` // user cannot modify
 }
 
-// info can be the email or username
+// we can retrieve user details by username, email or id
 func GetSupabaseUser(ctx context.Context, info map[string]interface{}) (*SupabaseUser, error) {
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseKey := os.Getenv("SUPABASE_KEY")
-	if supabaseURL == "" || supabaseKey == "" {
-		return nil, errors.New("SUPABASE_URL or SUPABASE_KEY not set")
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
 	}
 
-	var getURL string
-	// check if emailVal exists first then usernameVal
-	// if both dont exist throw error
-	if emailVal, ok := info["email"].(string); ok && emailVal != "" {
-		getURL = fmt.Sprintf("%s/rest/v1/users?email=eq.%s", supabaseURL, url.QueryEscape(emailVal))
-	} else {
-		if usernameVal, ok := info["username"].(string); ok && usernameVal != "" {
-			getURL = fmt.Sprintf("%s/rest/v1/users?username=eq.%s", supabaseURL, url.QueryEscape(usernameVal))
-		} else {
-			return nil, errors.New("cannot get supabase user. no email or username provided")
-		}
+	getURL, err := extractUrl(info, supabaseURL)
+	if err != nil {
+		return nil, err
 	}
 
 	req, _ := http.NewRequestWithContext(ctx, "GET", getURL, nil)
@@ -71,10 +63,9 @@ func CreateSupabaseUser(ctx context.Context, info map[string]interface{}) (*Supa
 		return nil, errors.New("google returned no email")
 	}
 
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseKey := os.Getenv("SUPABASE_KEY")
-	if supabaseURL == "" || supabaseKey == "" {
-		return nil, errors.New("SUPABASE_URL or SUPABASE_KEY not set")
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
 	}
 
 	name := ""
@@ -121,9 +112,68 @@ func CreateSupabaseUser(ctx context.Context, info map[string]interface{}) (*Supa
 	return &arr[0], nil
 }
 
+func PutSupabaseUser(ctx context.Context, info map[string]interface{}, userModifications *SupabaseUser) (*SupabaseUser, error) {
+	supabaseURL, supabaseKey, err := initSupabaseEnv()
+	if err != nil {
+		return nil, err
+	}
+
+	updateURL, err := extractUrl(info, supabaseURL)
+	if err != nil {
+		return nil, err
+	}
+	payloadBytes, _ := json.Marshal(userModifications)
+
+	req2, _ := http.NewRequestWithContext(context.Background(), "PATCH", updateURL, bytes.NewReader(payloadBytes))
+	req2.Header.Set("apikey", supabaseKey)
+	req2.Header.Set("Authorization", "Bearer "+supabaseKey)
+	req2.Header.Set("Content-Type", "application/json")
+	// ask supabase to return the inserted row
+	req2.Header.Set("Prefer", "return=representation")
+
+	resp2, err := http.DefaultClient.Do(req2)
+	if err != nil {
+		return nil, err
+	}
+	defer resp2.Body.Close()
+
+	if resp2.StatusCode < 200 || resp2.StatusCode >= 300 {
+		body2, _ := io.ReadAll(resp2.Body)
+		return nil, fmt.Errorf("supabase update user failed: status=%d body=%s", resp2.StatusCode, string(body2))
+	}
+
+	var arr []SupabaseUser
+	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
+		return nil, err
+	}
+	if len(arr) <= 0 {
+		return nil, errors.New("supabase did not update any user")
+	}
+	return &arr[0], nil
+}
+
 func generateUserName() string {
 	alphabet := "23456789abcdefghjkmnpqrstuvwxyz"
 	id, _ := gonanoid.Generate(alphabet, 12)
 	return id
 
+}
+
+func extractUrl(info map[string]interface{}, supabaseURL string) (string, error) {
+	URL := ""
+	if emailVal, ok := info["email"].(string); ok && emailVal != "" {
+		URL = fmt.Sprintf("%s/rest/v1/users?email=eq.%s", supabaseURL, url.QueryEscape(emailVal))
+	}
+	if usernameVal, ok := info["username"].(string); ok && usernameVal != "" {
+		URL = fmt.Sprintf("%s/rest/v1/users?username=eq.%s", supabaseURL, url.QueryEscape(usernameVal))
+	}
+	if idVal, ok := info["id"].(string); ok && idVal != "" {
+		URL = fmt.Sprintf("%s/rest/v1/users?id=eq.%s", supabaseURL, url.QueryEscape(idVal))
+	}
+	if URL == "" {
+		err := errors.New("cannot get supabase user. no email or username or id provided")
+		logx.Logger.Error(err.Error())
+		return URL, err
+	}
+	return URL, nil
 }

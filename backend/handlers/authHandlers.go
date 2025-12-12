@@ -157,7 +157,6 @@ func createAppJWT(user *db.SupabaseUser) (string, error) {
 	claims := jwt.MapClaims{
 		"sub":   user.ID,
 		"email": user.Email,
-		"name":  user.Name,
 		"iat":   now.Unix(),
 		"exp":   now.Add(24 * time.Hour).Unix(), // 24h expiry
 	}

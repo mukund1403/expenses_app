@@ -92,7 +92,7 @@ Rules:
 - Merchant = the payee / recipient / “to” field.
 - Account = the paying account / “from” field (may end with digits, "PayLah", "Wallet", "Visa xxxx", etc)
 - Amount: extract both currency + value.
-- Datetime: convert any human-readable date into ISO8601 (assume local timezone if not stated).
+- Datetime: Convert dates to ISO8601 verbatim, preserving the original time and not performing any timezone adjustments.
 - Category: choose one from:
   ["food_and_dining","travel","transport","groceries","utilities","transfers","entertainment","shopping","others"]
 
