@@ -5,41 +5,19 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"expenses/models"
 	"fmt"
 	"io"
 	"net/http"
-	"os"
-	"time"
 )
 
-type Transaction struct {
-	TransactionId string    `json:"transaction_id"`
-	UserId        string    `json:"user_id,omitempty"`
-	Merchant      string    `json:"merchant,omitempty"`
-	Amount        float64   `json:"amount,omitempty"`
-	Account       string    `json:"account,omitempty"`
-	Category      string    `json:"category,omitempty"`
-	DateTime      time.Time `json:"datetime,omitempty"`
-}
-
-// This struct is for when user wants to create tx
-// We want to send over the info but we should not try to insert transaction_id ourselves (it is auto created by supabase)
-type TransactionCreate struct {
-	UserId   string    `json:"user_id"`
-	Merchant string    `json:"merchant"`
-	Amount   float64   `json:"amount"`
-	Account  string    `json:"account"`
-	Category string    `json:"category"`
-	DateTime time.Time `json:"datetime"`
-}
-
-func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
+func GetTransactionList(userID string) ([]models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
 	}
 
-	getURL := fmt.Sprintf("%s/rest/v1/transactions?user_id=eq.%s&select=*", supabaseURL, user.ID)
+	getURL := fmt.Sprintf("%s/rest/v1/transactions?user_id=eq.%s&select=*", supabaseURL, userID)
 	req, _ := http.NewRequestWithContext(context.Background(), "GET", getURL, nil)
 	req.Header.Set("apikey", supabaseKey)
 	req.Header.Set("Authorization", "Bearer "+supabaseKey)
@@ -54,7 +32,7 @@ func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
 	if resp.StatusCode != 200 {
 		return nil, errors.New("error from supabase backend")
 	}
-	var transactionList []Transaction
+	var transactionList []models.Transaction
 	if err := json.NewDecoder(resp.Body).Decode(&transactionList); err != nil {
 		return nil, err
 	}
@@ -62,23 +40,19 @@ func GetTransactionList(user *SupabaseUser) ([]Transaction, error) {
 
 }
 
-func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+func PostTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
 	}
 
 	createURL := fmt.Sprintf("%s/rest/v1/transactions", supabaseURL)
-	newTx := TransactionCreate{
-		UserId:   transaction.UserId,
-		Merchant: transaction.Merchant,
-		Amount:   transaction.Amount,
-		Account:  transaction.Account,
-		Category: transaction.Category,
-		DateTime: transaction.DateTime,
+	if transaction.UserId == "" || transaction.Merchant == "" || transaction.Amount == 0 ||
+		transaction.Account == "" || transaction.Category == "" || transaction.DateTime.IsZero() {
+		return nil, errors.New("one or more fields are empty")
 	}
 
-	payloadBytes, _ := json.Marshal(newTx)
+	payloadBytes, _ := json.Marshal(transaction)
 
 	req2, _ := http.NewRequestWithContext(context.Background(), "POST", createURL, bytes.NewReader(payloadBytes))
 	req2.Header.Set("apikey", supabaseKey)
@@ -98,7 +72,7 @@ func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction,
 		return nil, fmt.Errorf("supabase create transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
-	var arr []Transaction
+	var arr []models.Transaction
 	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
 		return nil, err
 	}
@@ -108,7 +82,7 @@ func PostTransaction(user *SupabaseUser, transaction Transaction) (*Transaction,
 	return &arr[0], nil
 }
 
-func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+func PutTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -139,7 +113,7 @@ func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, 
 		return nil, fmt.Errorf("supabase update transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
-	var arr []Transaction
+	var arr []models.Transaction
 	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
 		return nil, err
 	}
@@ -150,7 +124,7 @@ func PutTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, 
 
 }
 
-func DeleteTransaction(user *SupabaseUser, transaction Transaction) (*Transaction, error) {
+func DeleteTransaction(transaction models.Transaction) (*models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
 		return nil, err
@@ -181,7 +155,7 @@ func DeleteTransaction(user *SupabaseUser, transaction Transaction) (*Transactio
 		return nil, fmt.Errorf("supabase delete transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
-	var arr []Transaction
+	var arr []models.Transaction
 	if err := json.NewDecoder(resp2.Body).Decode(&arr); err != nil {
 		return nil, err
 	}
@@ -189,13 +163,4 @@ func DeleteTransaction(user *SupabaseUser, transaction Transaction) (*Transactio
 		return nil, errors.New("supabase did not delete the transaction")
 	}
 	return &arr[0], nil
-}
-
-func initSupabaseEnv() (string, string, error) {
-	supabaseURL := os.Getenv("SUPABASE_URL")
-	supabaseKey := os.Getenv("SUPABASE_KEY")
-	if supabaseURL == "" || supabaseKey == "" {
-		return "", "", errors.New("SUPABASE_URL or SUPABASE_KEY not set")
-	}
-	return supabaseURL, supabaseKey, nil
 }
