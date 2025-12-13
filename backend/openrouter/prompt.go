@@ -92,7 +92,7 @@ Rules:
 - Merchant = the payee / recipient / “to” field.
 - Account = the paying account / “from” field (may end with digits, "PayLah", "Wallet", "Visa xxxx", etc)
 - Amount: extract both currency + value.
-- Datetime: Convert dates to ISO8601 verbatim, preserving the original time and not performing any timezone adjustments.
+- Datetime: - Datetime: Convert dates to ISO8601 in the format "YYYY-MM-DDTHH:MM:SSZ". Treat all times as UTC. Always append 'Z' at the end even if the email mentions a local timezone.
 - Category: choose one from:
   ["food_and_dining","travel","transport","groceries","utilities","transfers","entertainment","shopping","others"]
 
@@ -123,7 +123,7 @@ Output:
   "account": "DBS PayLah",
   "amount": 3.20, 
   "currency": "SGD",
-  "datetime": "2025-12-11T14:13:00+08:00",
+  "datetime": "2025-12-11T14:13:00Z",
   "category": "food_and_dining"
 }
 
@@ -147,7 +147,7 @@ Output:
   "account": "",
   "amount": 200, 
   "currency": "SGD",
-  "datetime": "2025-01-09T21:45:00+08:00",
+  "datetime": "2025-01-09T21:45:00Z",
   "category": "transfers"
 }
 
@@ -166,7 +166,7 @@ Output:
   "account": "PayLah! Wallet (Mobile ending 5631)",
   "amount": 1.00, 
   "currency": "SGD",
-  "datetime": "2025-12-11T14:13:00+08:00",
+  "datetime": "2025-12-11T14:13:00Z",
   "category": "transfers"
 }
 
@@ -183,7 +183,7 @@ Output:
   "account": "OCBC FRANK Account (-324006)",
   "amount": 1.90, 
   "currency": "SGD",
-  "datetime": "2025-12-01T13:04:00+08:00",
+  "datetime": "2025-12-01T13:04:00Z",
   "category": "food_and_dining"
 }
 
