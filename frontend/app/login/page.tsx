@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 export default function LoginPage() {
   const handleGoogleLogin = () => {
@@ -7,15 +7,15 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div style={{ padding: '2rem' }}>
       <h1>Login</h1>
       <button
         style={{
-          marginTop: "1rem",
-          padding: "10px 16px",
-          background: "#4285F4",
-          color: "white",
-          borderRadius: "6px",
+          marginTop: '1rem',
+          padding: '10px 16px',
+          background: '#4285F4',
+          color: 'white',
+          borderRadius: '6px',
         }}
         onClick={handleGoogleLogin}
       >
