@@ -75,8 +75,16 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 		c.JSON(500, map[string]string{"error": "failed to fetch user info"})
 		return
 	}
+	email, ok := userInfo["email"]
+	if !ok {
+		c.JSON(400, map[string]string{"error": "google oauth did not return email"})
+		return
+	}
+	info := map[string]interface{}{
+		"email": email,
+	}
 
-	user, err := db.GetSupabaseUser(ctx, userInfo)
+	user, err := db.GetSupabaseUser(ctx, info) // using info here because we only want to pass in email
 	isUserNew := false
 	if err != nil {
 		logx.Logger.Info("user does not exist. Creating...")
