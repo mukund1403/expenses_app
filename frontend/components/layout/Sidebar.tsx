@@ -7,13 +7,13 @@ import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 import SettingsApplicationsRoundedIcon from '@mui/icons-material/SettingsApplicationsRounded';
 import { ElementType, JSX, useEffect, useState } from 'react';
 import { SvgIconProps } from '@mui/material';
-import Drawer from '@mui/material/Drawer';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import { Box } from '@mui/material';
 
 export interface NavItem {
   label: string;
@@ -44,8 +44,7 @@ export default function Sidebar(): JSX.Element {
   if (!mounted) return <></>; // don't render on server
 
   return (
-    <Drawer
-      variant='permanent'
+    <Box
       sx={{
         color: 'background.default',
       }}
@@ -89,6 +88,6 @@ export default function Sidebar(): JSX.Element {
           );
         })}
       </List>
-    </Drawer>
+    </Box>
   );
 }
