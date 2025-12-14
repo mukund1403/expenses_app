@@ -5,7 +5,7 @@ import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 import SettingsApplicationsRoundedIcon from '@mui/icons-material/SettingsApplicationsRounded';
-import { ElementType, JSX, useEffect, useState } from 'react';
+import { ElementType, JSX } from 'react';
 import { SvgIconProps } from '@mui/material';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
@@ -35,13 +35,6 @@ const navItems: readonly NavItem[] = [
 
 export default function Sidebar(): JSX.Element {
   const pathname: string = usePathname();
-
-  const [mounted, setMounted] = useState(false);
-  // The effect only runs once ([] dependency array). No infinite re-render loop will happen.
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) return <></>; // don't render on server
 
   return (
     <Box
