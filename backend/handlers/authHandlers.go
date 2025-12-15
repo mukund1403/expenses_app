@@ -138,6 +138,32 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	c.Redirect(302, []byte(frontend+"/home"))
 }
 
+func LogoutHandler(ctx context.Context, c *app.RequestContext) {
+	env := os.Getenv("APP_ENV")
+	secure := true
+	if env == "dev" {
+		secure = false
+	}
+
+	c.SetCookie(
+		"token",                        // name
+		"",                             // value
+		-1,                             // maxAge in seconds
+		"/",                            // path
+		"",                             // domain (empty = current domain)
+		protocol.CookieSameSiteLaxMode, // sameSite lax
+		secure,                         // secure (true in prod with HTTPS)
+		true,                           // httpOnly
+	)
+	frontend := os.Getenv("FRONTEND_URL")
+	if frontend == "" {
+		logx.Logger.Panic("no frontend url")
+		return
+	}
+	logx.Logger.Info("user logged out successfully")
+	c.Redirect(302, []byte(frontend+"/login"))
+}
+
 // fetchGoogleUserInfo calls Google userinfo endpoint and returns minimal info
 func fetchGoogleUserInfo(client *http.Client) (map[string]interface{}, error) {
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v2/userinfo")

@@ -49,6 +49,7 @@ func RegisterGroupRoute(h *server.Hertz) {
 		// auth.POST("/register", handlers.RegisterHandler)
 		auth.GET("/oauth", handlers.OauthHandler)
 		auth.GET("/callback", handlers.OauthCallbackHandler)
+		auth.POST("/logout", handlers.LogoutHandler)
 	}
 
 	transactions := h.Group("/transactions")
