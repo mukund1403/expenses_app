@@ -4,16 +4,22 @@
 
 **Note:** The backend root domain can be accessed via: `process.env.NEXT_PUBLIC_GOLANG_URL/`
 
-# Navbar (element in layout.tsx)
-Graiden example: <br/>
-<img width="388" height="70" alt="Screenshot 2025-12-04 at 1 41 16 PM" src="https://github.com/user-attachments/assets/069746c7-e31a-4a9c-bdff-6cdd817af118" />
-
 Proposed order for us:
 1. Home
 2. Transactions
 3. Analytics (v2.0)
 4. Budgets (v2.0)
 5. Settings
+
+## Layout.tsx
+
+### Navbar (element in layout.tsx)
+Navbar example: (https://github.com/user-attachments/assets/069746c7-e31a-4a9c-bdff-6cdd817af118)
+
+### Logout (button)
+- Route: `POST process.env.NEXT_PUBLIC_GOLANG_URL/auth/logout` <br/>
+When user clicks button, we send a POST request to this backend route. Cookies are cleared and user is redirected to `frontend_url/login`
+
 
 ## Home (/home/page.tsx)
 example homepage: (https://github.com/user-attachments/assets/00c39863-c102-4685-b7f5-0d4979b4788f)
