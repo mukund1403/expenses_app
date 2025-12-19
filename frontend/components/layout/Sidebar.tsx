@@ -59,6 +59,7 @@ export default function Sidebar(): JSX.Element {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
+                borderRadius: '0.5rem',
               }}
             >
               <ListItemIcon sx={{ display: 'flex', justifyContent: 'center' }}>
@@ -71,7 +72,7 @@ export default function Sidebar(): JSX.Element {
                 primary={label}
                 slotProps={{
                   primary: {
-                    fontSize: '0.6rem',
+                    fontSize: '0.75rem',
                     textAlign: 'center',
                     color: isActive ? 'primary.main' : 'text.secondary',
                   },
