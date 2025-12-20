@@ -9,16 +9,24 @@ import {
   ListItemText,
   Typography,
 } from '@mui/material';
+import CurrencyAmountItem from '@/components/transactions/CurrencyAmountItem';
 
 export default function TransactionList({
-  transactions,
+  transactionList = [],
 }: {
-  transactions: Transaction[];
+  transactionList: Transaction[];
 }) {
   return (
-    <Box>
+    <Box
+      sx={{
+        borderRadius: '0.5rem',
+        backgroundColor: 'background.paper',
+        margin: '0.5rem',
+        overflow: 'hidden',
+      }}
+    >
       <List disablePadding>
-        {transactions.map((transaction, index) => {
+        {transactionList.map((transaction, index) => {
           // prettier-ignore
           const { transaction_id, merchant, amount, currency, account, category, datetime } = transaction;
 
@@ -37,7 +45,7 @@ export default function TransactionList({
 
           const Icon = getTransactionIcon(category);
 
-          const formattedAmount = [currency, amount.toFixed(2)].join(' ');
+          const formattedAmount = amount.toFixed(2);
 
           return (
             <ListItem key={transaction_id} divider>
@@ -70,14 +78,10 @@ export default function TransactionList({
                   secondary={secondaryText}
                   sx={{ flex: 1 }}
                 />
-                <Typography
-                  sx={{
-                    color: 'error.main',
-                    fontWeight: 500,
-                  }}
-                >
-                  {formattedAmount}
-                </Typography>
+                <CurrencyAmountItem
+                  currency={currency}
+                  amount={formattedAmount}
+                />
               </Box>
             </ListItem>
           );

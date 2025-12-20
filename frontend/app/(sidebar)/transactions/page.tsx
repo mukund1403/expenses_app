@@ -1,14 +1,16 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import Alert from '@mui/material/Alert';
-import { Transaction } from '@/components/transactions/consts';
+import { CurrencySummary, Transaction } from '@/components/transactions/consts';
 import TransactionList from '@/components/transactions/TransactionList';
-import { Box } from '@mui/material';
+import TransactionOverview from '@/components/transactions/TransactionOverview';
+import { getCurrencySummaryList } from '@/components/transactions/utils';
 
 export default async function TransactionsPage() {
   const cookie = await cookies();
 
-  let transactions: Transaction[];
+  let transactionList: Transaction[];
+  let currencySummaryList: CurrencySummary[];
 
   try {
     const res = await fetch(
@@ -35,23 +37,17 @@ export default async function TransactionsPage() {
     }
 
     const data = await res.json();
-    transactions = data['transaction_list'];
+
+    transactionList = data['transaction_list'];
+    currencySummaryList = getCurrencySummaryList(transactionList);
   } catch (e) {
     return <Alert severity='error'>Failed to fetch transaction data.</Alert>;
   }
 
   return (
     <>
-      <div>This is the Transactions Page</div>
-      <Box
-        sx={{
-          borderRadius: '0.5rem',
-          backgroundColor: 'background.paper',
-          margin: '0.5rem',
-        }}
-      >
-        <TransactionList transactions={transactions} />
-      </Box>
+      <TransactionOverview currencySummaryList={currencySummaryList} />
+      <TransactionList transactionList={transactionList} />
     </>
   );
 }

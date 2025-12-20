@@ -23,6 +23,12 @@ export interface Transaction {
   datetime: ISO8601String;
 }
 
+export interface CurrencySummary {
+  currency: string;
+  expense: number;
+  income: number;
+}
+
 export const transactionCategoryMap: Record<
   string,
   { subcategories: string[]; icon: ElementType<SvgIconProps> }
