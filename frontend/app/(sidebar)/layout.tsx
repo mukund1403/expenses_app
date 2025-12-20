@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Sidebar from '@/components/layout/Sidebar';
 import BottomNav from '@/components/layout/BottomNav';
-import { useTheme, useMediaQuery } from '@mui/material';
+import { useTheme, useMediaQuery, Box } from '@mui/material';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -12,14 +12,29 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div
       style={{
-        display: 'flex',
+        display: 'grid',
         minHeight: '100vh',
-        flexDirection: isMobile ? 'column' : 'row',
+        gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
       }}
     >
-      {!isMobile && <Sidebar />}
-      <div style={{ flexGrow: 1 }}>{children}</div>
-      {isMobile && <BottomNav />}
+      {!isMobile && (
+        <Box
+          sx={{
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
+            overflowY: 'auto',
+          }}
+        >
+          <Sidebar />
+        </Box>
+      )}
+      <main style={{ overflowY: 'auto' }}>{children}</main>
+      {isMobile && (
+        <Box sx={{ position: 'fixed', bottom: 0, width: '100%' }}>
+          <BottomNav />
+        </Box>
+      )}
     </div>
   );
 }

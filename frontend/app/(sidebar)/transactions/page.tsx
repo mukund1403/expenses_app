@@ -47,7 +47,6 @@ export default async function TransactionsPage() {
         sx={{
           borderRadius: '0.5rem',
           backgroundColor: 'background.paper',
-          height: '100%',
           margin: '0.5rem',
         }}
       >
