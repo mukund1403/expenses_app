@@ -17,7 +17,7 @@ export default function TransactionList({
 }) {
   return (
     <Box>
-      <List>
+      <List disablePadding>
         {transactions.map((transaction, index) => {
           // prettier-ignore
           const { transaction_id, merchant, amount, currency, account, category, datetime } = transaction;
@@ -44,12 +44,17 @@ export default function TransactionList({
               <ListItemAvatar>
                 <Avatar
                   sx={{
-                    bgcolor: 'background.paper',
+                    bgcolor: 'background.default',
                     color: 'primary.main',
                     border: '2px solid rgba(255,255,255,0.15)', // shadow effect
                   }}
                 >
-                  <Icon fontSize='small' />
+                  <Icon
+                    sx={{
+                      fontSize: 20,
+                      transform: { xs: '', sm: 'translateX(0.6px)' }, // fix optical centering
+                    }}
+                  />
                 </Avatar>
               </ListItemAvatar>
               <Box

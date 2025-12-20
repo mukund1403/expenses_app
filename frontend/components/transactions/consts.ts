@@ -90,4 +90,4 @@ export const transactionCategoryMap: Record<
     ],
     icon: WorkRounded,
   },
-};
+} as const;

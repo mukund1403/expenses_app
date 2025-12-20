@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import Alert from '@mui/material/Alert';
 import { Transaction } from '@/components/transactions/consts';
 import TransactionList from '@/components/transactions/TransactionList';
+import { Box } from '@mui/material';
 
 export default async function TransactionsPage() {
   const cookie = await cookies();
@@ -42,7 +43,16 @@ export default async function TransactionsPage() {
   return (
     <>
       <div>This is the Transactions Page</div>
-      <TransactionList transactions={transactions} />
+      <Box
+        sx={{
+          borderRadius: '0.5rem',
+          backgroundColor: 'background.paper',
+          height: '100%',
+          margin: '0.5rem',
+        }}
+      >
+        <TransactionList transactions={transactions} />
+      </Box>
     </>
   );
 }

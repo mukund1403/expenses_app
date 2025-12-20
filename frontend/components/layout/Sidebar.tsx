@@ -1,14 +1,5 @@
 'use client';
 
-import {
-  AccountBalanceWalletRounded,
-  AutoGraphRounded,
-  HomeRounded,
-  ReceiptRounded,
-  SettingsApplicationsRounded,
-} from '@mui/icons-material';
-import { ElementType, JSX } from 'react';
-import { SvgIconProps } from '@mui/material';
 import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import { usePathname } from 'next/navigation';
@@ -16,24 +7,8 @@ import Link from 'next/link';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import { Box } from '@mui/material';
-
-export interface NavItem {
-  label: string;
-  href: string;
-  icon: ElementType<SvgIconProps>;
-}
-
-const navItems: readonly NavItem[] = [
-  { label: 'Home', href: '/home', icon: HomeRounded },
-  { label: 'Analytics', href: '/analytics', icon: AutoGraphRounded },
-  { label: 'Budgets', href: '/budgets', icon: AccountBalanceWalletRounded },
-  { label: 'Transactions', href: '/transactions', icon: ReceiptRounded },
-  {
-    label: 'Settings',
-    href: '/settings',
-    icon: SettingsApplicationsRounded,
-  },
-] as const;
+import { navItems, NavItem } from '@/components/layout/consts';
+import { JSX } from 'react';
 
 export default function Sidebar(): JSX.Element {
   const pathname: string = usePathname();
