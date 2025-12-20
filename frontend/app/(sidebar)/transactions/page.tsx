@@ -1,11 +1,13 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import Alert from '@mui/material/Alert';
+import { Transaction } from '@/components/transactions/consts';
+import TransactionList from '@/components/transactions/TransactionList';
 
 export default async function TransactionsPage() {
   const cookie = await cookies();
 
-  let data;
+  let transactions: Transaction[];
 
   try {
     const res = await fetch(
@@ -22,7 +24,6 @@ export default async function TransactionsPage() {
 
     if (res.status >= 300 && res.status < 400) {
       const redirectUrl = res.headers.get('Location');
-      console.log('redirectUrl', redirectUrl);
       if (redirectUrl) {
         redirect('/login');
       }
@@ -32,12 +33,16 @@ export default async function TransactionsPage() {
       throw new Error(`Request failed: ${res.status}`);
     }
 
-    data = await res.json();
+    const data = await res.json();
+    transactions = data['transaction_list'];
   } catch (e) {
     return <Alert severity='error'>Failed to fetch transaction data.</Alert>;
   }
 
-  console.log(data);
-
-  return <div>This is the Transactions Page</div>;
+  return (
+    <>
+      <div>This is the Transactions Page</div>
+      <TransactionList transactions={transactions} />
+    </>
+  );
 }

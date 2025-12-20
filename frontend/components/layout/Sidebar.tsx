@@ -1,10 +1,12 @@
 'use client';
 
-import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
-import AutoGraphRoundedIcon from '@mui/icons-material/AutoGraphRounded';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
-import SettingsApplicationsRoundedIcon from '@mui/icons-material/SettingsApplicationsRounded';
+import {
+  AccountBalanceWalletRounded,
+  AutoGraphRounded,
+  HomeRounded,
+  ReceiptRounded,
+  SettingsApplicationsRounded,
+} from '@mui/icons-material';
 import { ElementType, JSX } from 'react';
 import { SvgIconProps } from '@mui/material';
 import List from '@mui/material/List';
@@ -22,14 +24,14 @@ export interface NavItem {
 }
 
 const navItems: readonly NavItem[] = [
-  { label: 'Home', href: '/home', icon: HomeRoundedIcon },
-  { label: 'Analytics', href: '/analytics', icon: AutoGraphRoundedIcon },
-  { label: 'Budgets', href: '/budgets', icon: AccountBalanceWalletRoundedIcon },
-  { label: 'Transactions', href: '/transactions', icon: ReceiptRoundedIcon },
+  { label: 'Home', href: '/home', icon: HomeRounded },
+  { label: 'Analytics', href: '/analytics', icon: AutoGraphRounded },
+  { label: 'Budgets', href: '/budgets', icon: AccountBalanceWalletRounded },
+  { label: 'Transactions', href: '/transactions', icon: ReceiptRounded },
   {
     label: 'Settings',
     href: '/settings',
-    icon: SettingsApplicationsRoundedIcon,
+    icon: SettingsApplicationsRounded,
   },
 ] as const;
 

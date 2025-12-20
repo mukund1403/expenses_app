@@ -8,6 +8,9 @@ const theme = createTheme({
     primary: {
       main: '#9b87f8',
     },
+    background: {
+      paper: '#303030',
+    },
   },
 });
 
