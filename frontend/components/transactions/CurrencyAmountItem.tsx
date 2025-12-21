@@ -1,11 +1,14 @@
 import { Box, Typography } from '@mui/material';
+import { TransactionType } from '@/components/transactions/consts';
 
 export default function CurrencyAmountItem({
   currency,
   amount,
+  type,
 }: {
   currency: string;
   amount: string;
+  type: TransactionType;
 }) {
   return (
     <Box
@@ -38,6 +41,8 @@ export default function CurrencyAmountItem({
           lineHeight: 1,
           fontSize: '1.5rem',
           fontWeight: '500',
+          color: type === 'income' ? 'success.main' : 'text.primary',
+          transform: 'translateY(0.2rem)',
         }}
       >
         {amount}

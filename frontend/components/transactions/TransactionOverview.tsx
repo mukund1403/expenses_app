@@ -18,8 +18,9 @@ export default function TransactionOverview({
       }}
     >
       <List disablePadding>
-        {currencySummaryList.map(({ currency, expense }, index) => {
+        {currencySummaryList.map(({ currency, income, expense }, index) => {
           const formattedExpense = expense.toFixed(2);
+          const formattedIncome = income.toFixed(2);
 
           return (
             <div key={currency}>
@@ -35,7 +36,11 @@ export default function TransactionOverview({
                     <NorthEastRounded sx={{ color: 'success.main' }} />
                     <Typography>Income</Typography>
                   </ListItem>
-                  <CurrencyAmountItem currency={currency} amount='0.00' />
+                  <CurrencyAmountItem
+                    currency={currency}
+                    amount={formattedIncome}
+                    type='income'
+                  />
                 </List>
                 <List disablePadding sx={{ width: '100%' }}>
                   <ListItem
@@ -51,6 +56,7 @@ export default function TransactionOverview({
                   <CurrencyAmountItem
                     currency={currency}
                     amount={formattedExpense}
+                    type='expense'
                   />
                 </List>
               </ListItem>

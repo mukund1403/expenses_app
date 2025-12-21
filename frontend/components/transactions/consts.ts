@@ -13,6 +13,8 @@ import {
 
 type ISO8601String = string;
 
+export type TransactionType = 'income' | 'expense';
+
 export interface Transaction {
   transaction_id: string;
   merchant: string;
@@ -21,6 +23,7 @@ export interface Transaction {
   account: string;
   category: string;
   datetime: ISO8601String;
+  type: TransactionType;
 }
 
 export interface CurrencySummary {
@@ -93,6 +96,8 @@ export const transactionCategoryMap: Record<
       'education',
       'gifts & donations',
       'other expenses',
+      'transfers',
+      'salary',
     ],
     icon: WorkRounded,
   },

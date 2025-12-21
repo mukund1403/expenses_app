@@ -38,7 +38,10 @@ export default async function TransactionsPage() {
 
     const data = await res.json();
 
-    transactionList = data['transaction_list'];
+    transactionList = data['transaction_list'].sort(
+      // TODO: implement sorting filter, descending `datetime` for now
+      (a: Transaction, b: Transaction) => b.datetime.localeCompare(a.datetime),
+    );
     currencySummaryList = getCurrencySummaryList(transactionList);
   } catch (e) {
     return <Alert severity='error'>Failed to fetch transaction data.</Alert>;
