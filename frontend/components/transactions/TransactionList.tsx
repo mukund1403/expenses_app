@@ -27,7 +27,7 @@ export default function TransactionList({
       <List disablePadding>
         {transactionList.map((transaction, index) => {
           // prettier-ignore
-          const { transaction_id, merchant, amount, currency, account, category, datetime } = transaction;
+          const { transaction_id, merchant, amount, currency, account, category, datetime, type } = transaction;
 
           const primaryText = [merchant, account].filter(Boolean).join(' • ');
 
@@ -80,6 +80,7 @@ export default function TransactionList({
                 <CurrencyAmountItem
                   currency={currency}
                   amount={formattedAmount}
+                  type={type}
                 />
               </Box>
             </ListItem>
