@@ -7,7 +7,6 @@ import {
   ListItem,
   ListItemAvatar,
   ListItemText,
-  Typography,
 } from '@mui/material';
 import CurrencyAmountItem from '@/components/transactions/CurrencyAmountItem';
 
