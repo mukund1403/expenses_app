@@ -11,4 +11,5 @@ type Transaction struct {
 	Account       string    `json:"account,omitempty"`
 	Category      string    `json:"category,omitempty"`
 	DateTime      time.Time `json:"datetime,omitzero"` // need to use omitzero for structs. omitempty does not work.
+	Type          string    `json:"type,omitempty"`
 }
