@@ -73,8 +73,8 @@ func buildPrompt(input string) string {
 }
 
 var promptTemplate = `
-You are a financial transaction extraction engine.  
-You receive plaintext converted from bank emails.  
+You are a financial transaction extraction engine.
+You receive plaintext converted from bank emails.
 Extract ONLY the following fields and return ONLY valid JSON. No markdown.
 
 Required JSON structure:
@@ -84,32 +84,51 @@ Required JSON structure:
   "amount": number,
   "currency": "SGD|USD|EUR|...",
   "datetime": "ISO8601",
-  "category": ""
+  "category": "",
+  "type": ""
 }
 
 Rules:
 - Input is always plaintext.
 - Merchant = the payee / recipient / “to” field.
-- Account = the paying account / “from” field (may end with digits, "PayLah", "Wallet", "Visa xxxx", etc)
-- Amount: extract both currency + value.
-- Datetime: - Datetime: Convert dates to ISO8601 in the format "YYYY-MM-DDTHH:MM:SSZ". Treat all times as UTC. Always append 'Z' at the end even if the email mentions a local timezone.
-- Category: choose one from:
+- Account = the paying or receiving account / “from” field (may end with digits, "PayLah", "Wallet", "Visa xxxx", etc).
+- Amount: extract both currency + numeric value (always positive).
+- Datetime: Convert dates to ISO8601 in the format "YYYY-MM-DDTHH:MM:SSZ". Treat all times as UTC. Always append 'Z' at the end even if the email mentions a local timezone.
+
+Transaction type rules:
+- type = "expense" if money leaves the user (payments, card charges, transfers sent).
+- type = "income" if money enters the user (salary credits, transfers received).
+- If unclear, default to "expense".
+
+Category rules:
+- If type = "expense", choose one from:
   ["food_and_dining","travel","transport","groceries","utilities","transfers","entertainment","shopping","others"]
 
-Category heuristics:
+- If type = "income", choose one from:
+  ["salary","transfers"]
+
+Expense category heuristics:
 - food_and_dining → cafés, restaurants, beverage stores (e.g., Luckin, Starbucks, McDonald's).
 - travel → flights, booking.com, airbnb, hotels.
 - transport → bus, MRT, SMRT, TFL, ride hailing (Grab, Uber, Gojek).
 - groceries → FairPrice, Cold Storage, Sainsbury's.
 - utilities → recurring household bills, telecom, power, water.
-- transfers → peer-to-peer payment, wallet transfers, phone-number based receiving, PayLah/PayNow.
+- transfers → peer-to-peer payments, wallet transfers, PayLah/PayNow (sent).
 - entertainment → movies, attractions, theme parks.
 - shopping → retail stores, Shopee, Zalora, H&M.
 - others → anything unknown.
 
-If the category is ambiguous, set the category to "others".
+Income category heuristics:
+- salary → regular payroll credits from an employer (keywords: salary, payroll, pay).
+- transfers → peer-to-peer transfers, PayNow/FAST credits, wallet transfers received.
 
-DO NOT hallucinate fields. If a field (merchant, account, amount, datetime) cannot be found in the text, set it to an empty string "" (or null where appropriate), NOT the category "others".
+If the category is ambiguous:
+- For expenses, set category to "others".
+- For income, set category to "transfers".
+
+DO NOT hallucinate fields.
+If a field (merchant, account, amount, datetime) cannot be found in the text, set it to an empty string "" (or null where appropriate).
+Do NOT use "others" as a placeholder for missing fields.
 
 ---
 
@@ -121,10 +140,11 @@ Output:
 {
   "merchant": "Luckin Coffee",
   "account": "DBS PayLah",
-  "amount": 3.20, 
+  "amount": 3.20,
   "currency": "SGD",
   "datetime": "2025-12-11T14:13:00Z",
-  "category": "food_and_dining"
+  "category": "food_and_dining",
+  "type": "expense"
 }
 
 Input:
@@ -133,10 +153,11 @@ Output:
 {
   "merchant": "Uber",
   "account": "Visa ending 4455",
-  "amount": 18.52, 
+  "amount": 18.52,
   "currency": "USD",
   "datetime": "2025-11-05T08:10:00Z",
-  "category": "transport"
+  "category": "transport",
+  "type": "expense"
 }
 
 Input:
@@ -145,10 +166,11 @@ Output:
 {
   "merchant": "John Tan (Mobile ending 9822)",
   "account": "",
-  "amount": 200, 
+  "amount": 200,
   "currency": "SGD",
   "datetime": "2025-01-09T21:45:00Z",
-  "category": "transfers"
+  "category": "transfers",
+  "type": "expense"
 }
 
 Input:
@@ -163,11 +185,12 @@ To: John Tan (Mobile ending 8085)"
 Output:
 {
   "merchant": "John Tan (Mobile ending 8085)",
-  "account": "PayLah! Wallet (Mobile ending 5631)",
-  "amount": 1.00, 
+  "account": "PayLah! Wallet (Mobile ending 5971)",
+  "amount": 1.00,
   "currency": "SGD",
   "datetime": "2025-12-11T14:13:00Z",
-  "category": "transfers"
+  "category": "transfers",
+  "type": "expense"
 }
 
 Input:
@@ -180,16 +203,50 @@ From your account: OCBC FRANK Account (-469001)"
 Output:
 {
   "merchant": "FONG SENG FAST FOOD NASI LEMAK (1999)",
-  "account": "OCBC FRANK Account (-324006)",
-  "amount": 1.90, 
+  "account": "OCBC FRANK Account (-469001)",
+  "amount": 1.90,
   "currency": "SGD",
   "datetime": "2025-12-01T13:04:00Z",
-  "category": "food_and_dining"
+  "category": "food_and_dining",
+  "type": "expense"
+}
+
+Input:
+"Salary Credit from ACME PTE LTD
+
+Date: 30 Nov 2025
+Amount: SGD 4,500.00
+To Account: DBS Multiplier Account (-1234)"
+Output:
+{
+  "merchant": "ACME PTE LTD",
+  "account": "DBS Multiplier Account (-1234)",
+  "amount": 4500.00,
+  "currency": "SGD",
+  "datetime": "2025-11-30T00:00:00Z",
+  "category": "salary",
+  "type": "income"
+}
+
+Input:
+"You have received SGD 120.00 from John Tan via PayNow.
+
+Date & Time: 15 Dec 2025 18:42 SGT
+To: OCBC 360 Account (-7788)"
+Output:
+{
+  "merchant": "John Tan",
+  "account": "OCBC 360 Account (-7788)",
+  "amount": 120.00,
+  "currency": "SGD",
+  "datetime": "2025-12-15T18:42:00Z",
+  "category": "transfers",
+  "type": "income"
 }
 
 ---
-Return ONLY valid JSON. 
-Do NOT include code fences. Do NOT include backticks json or any other formatting.
-Output must be raw JSON only."
-
+Return ONLY valid JSON.
+Do NOT include code fences.
+Do NOT include backticks or any other formatting.
+Output must be raw JSON only.
 `

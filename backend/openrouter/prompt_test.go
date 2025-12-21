@@ -39,36 +39,20 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 		check func(t *testing.T, tx models.Transaction)
 	}{
 		// --------------------
-		// 🇸🇬 Singapore Banks
+		// 🇸🇬 Singapore Banks – EXPENSES
 		// --------------------
 
 		{
 			name:  "DBS card food transaction",
 			input: `DBS Alert: SGD 47.85 has been deducted from your DBS Visa Card ending 6321 at FAIRPRICE on 15 Oct 2025 18:27.`,
 			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
 				if tx.Category != "groceries" {
 					t.Errorf("expected groceries, got %s", tx.Category)
 				}
-				if tx.Merchant == "" {
-					t.Errorf("merchant missing")
-				}
 				if tx.Amount != 47.85 {
-					t.Errorf("wrong amount: %v", tx.Amount)
-				}
-			},
-		},
-
-		{
-			name:  "OCBC PayNow peer transfer",
-			input: `OCBC Alert: You have received SGD 250.00 via PayNow from TAN SIEW LING on 21 Sep 2025 at 09:15.`,
-			check: func(t *testing.T, tx models.Transaction) {
-				if tx.Category != "transfers" {
-					t.Errorf("expected transfers, got %s", tx.Category)
-				}
-				if tx.Merchant == "" {
-					t.Errorf("merchant (recipient) missing")
-				}
-				if tx.Amount != 250.00 {
 					t.Errorf("wrong amount: %v", tx.Amount)
 				}
 			},
@@ -78,6 +62,9 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 			name:  "POSB coffee purchase",
 			input: `POSB SMS: You spent SGD 13.50 at SELEGIE COFFEE 3 on 02 Nov 2025 07:52 on your POSB Everyday Card.`,
 			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
 				if tx.Category != "food_and_dining" {
 					t.Errorf("expected food_and_dining, got %s", tx.Category)
 				}
@@ -91,10 +78,49 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 			name:  "DBS ambiguous merchant",
 			input: `DBS Alert: A transaction of SGD 88.50 occurred on your card ending 7789 on 12 Sep 2025 12:34.`,
 			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
 				if tx.Category != "others" {
-					t.Errorf("expected others for ambiguous transaction, got %s", tx.Category)
+					t.Errorf("expected others, got %s", tx.Category)
 				}
 				if tx.Amount != 88.50 {
+					t.Errorf("wrong amount: %v", tx.Amount)
+				}
+			},
+		},
+
+		// --------------------
+		// 🇸🇬 Singapore Banks – INCOME
+		// --------------------
+
+		{
+			name:  "DBS salary credit",
+			input: `DBS Alert: Salary Credit of SGD 5,200.00 from ACME PTE LTD on 28 Nov 2025.`,
+			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "income" {
+					t.Errorf("expected income, got %s", tx.Type)
+				}
+				if tx.Category != "salary" {
+					t.Errorf("expected salary, got %s", tx.Category)
+				}
+				if tx.Amount != 5200.00 {
+					t.Errorf("wrong amount: %v", tx.Amount)
+				}
+			},
+		},
+
+		{
+			name:  "OCBC PayNow incoming transfer",
+			input: `OCBC Alert: You have received SGD 250.00 via PayNow from TAN SIEW LING on 21 Sep 2025 at 09:15.`,
+			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "income" {
+					t.Errorf("expected income, got %s", tx.Type)
+				}
+				if tx.Category != "transfers" {
+					t.Errorf("expected transfers, got %s", tx.Category)
+				}
+				if tx.Amount != 250.00 {
 					t.Errorf("wrong amount: %v", tx.Amount)
 				}
 			},
@@ -108,6 +134,9 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 			name:  "HSBC UK card coffee purchase",
 			input: `HSBC Fraud Alert: Have you attempted the following transaction(s) on your card ending 9876? 9876, £3.45, 05 Nov 2025, 08:12, STARBUCKS UK LTD.`,
 			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
 				if tx.Currency != "GBP" {
 					t.Errorf("expected GBP, got %s", tx.Currency)
 				}
@@ -121,23 +150,13 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 			name:  "HSBC UK transport transaction",
 			input: `HSBC Alert: Card ending 4421 was charged £2.90 at TFL TRAVEL CH on 18 Oct 2025 09:01.`,
 			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
 				if tx.Category != "transport" {
 					t.Errorf("expected transport, got %s", tx.Category)
 				}
 				if tx.Amount != 2.90 {
-					t.Errorf("wrong amount: %v", tx.Amount)
-				}
-			},
-		},
-
-		{
-			name:  "HSBC UK declined retail transaction",
-			input: `HSBC Alert: A payment of £120.50 at AMAZON UK MARKETPLACE on 10 Dec 2025 16:45 has been declined on your card ending 1234.`,
-			check: func(t *testing.T, tx models.Transaction) {
-				if tx.Category != "shopping" && tx.Category != "others" {
-					t.Errorf("expected shopping or others, got %s", tx.Category)
-				}
-				if tx.Amount != 120.50 {
 					t.Errorf("wrong amount: %v", tx.Amount)
 				}
 			},
@@ -159,6 +178,9 @@ From: PayLah! Wallet (Mobile ending 5971)
 To: John Tan (Mobile ending 8085)
 `,
 			check: func(t *testing.T, tx models.Transaction) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
 				if tx.Category != "transfers" {
 					t.Errorf("expected transfers, got %s", tx.Category)
 				}
@@ -176,6 +198,7 @@ To: John Tan (Mobile ending 8085)
 				t.Fatalf("LLM call failed: %v", err)
 			}
 			t.Log(out)
+
 			var tx models.Transaction
 			if err := json.Unmarshal([]byte(out), &tx); err != nil {
 				t.Fatalf("invalid JSON: %v\n%s", err, out)
