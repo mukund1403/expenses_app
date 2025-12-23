@@ -21,9 +21,9 @@ func init() {
 func main() {
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
-	port := os.Getenv("PORT")
-	serverURL := "0.0.0.0:" + port
-	if port == "" {
+	appEnv := os.Getenv("APP_ENV")
+	serverURL := "0.0.0.0:8080"
+	if appEnv == "dev" {
 		serverURL = "127.0.0.1:8080"
 	}
 	h := server.Default(
