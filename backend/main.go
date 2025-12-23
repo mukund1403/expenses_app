@@ -29,7 +29,7 @@ func main() {
 	h := server.Default(
 		server.WithHostPorts(serverURL),
 	)
-	corsAllowedDomain := []string{os.Getenv("CORS_ALLOWED_DOMAIN")}
+	corsAllowedDomain := []string{os.Getenv("FRONTEND_URL")}
 	h.Use(cors.New(cors.Config{
 		AllowOrigins:     corsAllowedDomain,                                             // Allowed domains, need to bring schema
 		AllowMethods:     []string{"PUT", "POST"},                                       // Allowed request methods
