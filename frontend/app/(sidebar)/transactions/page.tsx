@@ -12,26 +12,26 @@ export default async function TransactionsPage() {
   let transactionList: Transaction[];
   let currencySummaryList: CurrencySummary[];
 
-  try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`,
-      {
-        headers: {
-          Cookie: cookie.toString(),
-        },
-        method: 'GET',
-        cache: 'no-store',
-        redirect: 'manual',
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`,
+    {
+      headers: {
+        Cookie: cookie.toString(),
       },
-    );
+      method: 'GET',
+      cache: 'no-store',
+      redirect: 'manual',
+    },
+  );
 
-    if (res.status >= 300 && res.status < 400) {
-      const redirectUrl = res.headers.get('Location');
-      if (redirectUrl) {
-        redirect('/login');
-      }
+  if (res.status >= 300 && res.status < 400) {
+    const redirectUrl = res.headers.get('Location');
+    if (redirectUrl) {
+      redirect(redirectUrl);
     }
+  }
 
+  try {
     if (!res.ok) {
       throw new Error(`Request failed: ${res.status}`);
     }
