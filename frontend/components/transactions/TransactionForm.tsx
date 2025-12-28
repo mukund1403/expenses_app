@@ -23,9 +23,13 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+import submitTransactionAction from '@/app/(sidebar)/transactions/create/submitTransactionAction';
 
 import { styled } from '@mui/material/styles';
 import { InfoRounded } from '@mui/icons-material';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { Dayjs } from 'dayjs';
 
 export default function TransactionForm({
   initialTransaction: initTx, // shorthand for readability
@@ -35,7 +39,9 @@ export default function TransactionForm({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [transaction, setTransaction] = useState(initTx ?? emptyTransaction);
+  const [transaction, setTransaction] = useState<Transaction>(
+    (initTx as Transaction) ?? emptyTransaction,
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -72,7 +78,7 @@ export default function TransactionForm({
   };
 
   const onTypeChange = (type: TransactionType) => {
-    updateField('type', type);
+    updateField('type', type as TransactionType);
     const categoryMap =
       type === 'income'
         ? transactionCategoryIncomeMap
@@ -217,6 +223,9 @@ export default function TransactionForm({
           <Box sx={{ display: 'flex' }}>
             <Autocomplete
               options={currencyList}
+              onChange={(e, value) => {
+                updateField('currency', value ?? '');
+              }}
               slotProps={{
                 listbox: {
                   style: { fontSize: 'small' },
@@ -261,6 +270,51 @@ export default function TransactionForm({
             </Box>
           </FormHelperText>
         </TransactionFormGrid>
+        <TransactionFormGrid size={12}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              sx={{ width: '100%' }}
+              slotProps={{
+                textField: {
+                  InputProps: {
+                    sx: {
+                      fontSize: 'small',
+                    },
+                  },
+                },
+              }}
+              onChange={(date: Dayjs | null) => {
+                const isoString = date ? date.toISOString() : '';
+                updateField('datetime', isoString);
+              }}
+            />
+          </LocalizationProvider>
+        </TransactionFormGrid>
+        <TransactionFormGrid size={12}>
+          <Button
+            variant='contained'
+            color='primary'
+            fullWidth
+            onClick={() => {
+              // TODO: Implement validation properly with error strings
+              // TODO: Display errors properly in Modal
+              const newErrors: Record<string, string> = {};
+              if (!transaction.merchant)
+                newErrors.merchant = 'Merchant cannot be empty';
+              if (!transaction.account)
+                newErrors.account = 'Account cannot be empty';
+              if (!transaction.amount)
+                newErrors.amount = 'Amount cannot be zero';
+              setErrors(newErrors);
+
+              if (Object.keys(newErrors).length === 0) {
+                submitTransactionAction(transaction);
+              }
+            }}
+          >
+            Submit
+          </Button>
+        </TransactionFormGrid>
       </Grid>
     </form>
   );
@@ -278,14 +332,3 @@ const TransactionFormLabel = styled(InputLabel)(({ theme }) => ({
   width: '100%',
   marginBottom: '0.4rem',
 }));
-
-// TODO: delete this
-// export interface Transaction {
-//   transaction_id: string;
-//   merchant: string;
-//   amount: number;
-//   currency: string;
-//   account: string;
-//   category: string;
-//   datetime: ISO8601String;
-// }
