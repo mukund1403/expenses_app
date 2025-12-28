@@ -3,14 +3,18 @@ import { SvgIconProps } from '@mui/material';
 import { MoreHorizRounded } from '@mui/icons-material';
 import {
   Transaction,
-  transactionCategoryMap,
+  transactionCategoryIncomeMap,
+  transactionCategoryExpenseMap,
   CurrencySummary,
 } from '@/components/transactions/consts';
 
 export function getTransactionIcon(
   subcategory: string,
 ): ElementType<SvgIconProps> {
-  for (const category of Object.values(transactionCategoryMap)) {
+  for (const category of Object.values({
+    ...transactionCategoryIncomeMap,
+    ...transactionCategoryExpenseMap,
+  })) {
     if (category.subcategories.includes(subcategory)) {
       return category.icon;
     }

@@ -9,7 +9,8 @@ const theme = createTheme({
       main: '#9b87f8',
     },
     background: {
-      paper: '#1c1c1c',
+      default: '#191a1c',
+      paper: '#26282b',
     },
   },
 });

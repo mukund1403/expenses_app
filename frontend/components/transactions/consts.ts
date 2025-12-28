@@ -26,13 +26,24 @@ export interface Transaction {
   type: TransactionType;
 }
 
+export const emptyTransaction = {
+  transaction_id: '',
+  merchant: '',
+  amount: 0,
+  currency: '',
+  account: '',
+  category: 'home',
+  datetime: '',
+  type: 'expense',
+};
+
 export interface CurrencySummary {
   currency: string;
   expense: number;
   income: number;
 }
 
-export const transactionCategoryMap: Record<
+export const transactionCategoryExpenseMap: Record<
   string,
   { subcategories: string[]; icon: ElementType<SvgIconProps> }
 > = {
@@ -55,8 +66,6 @@ export const transactionCategoryMap: Record<
       'vehicle & repairs',
       'gas',
       'other transportation',
-      'transfer',
-      'credit card payment',
     ],
     icon: DirectionsCarFilledRounded,
   },
@@ -83,7 +92,7 @@ export const transactionCategoryMap: Record<
     icon: FlightRounded,
   },
   'Shopping & Subscriptions': {
-    subcategories: ['shopping', 'clothing', 'other shopping', 'subscriptions'],
+    subcategories: ['shopping', 'clothing', 'subscriptions', 'other shopping'],
     icon: ShoppingCartRounded,
   },
   'Work & Income': {
@@ -92,13 +101,28 @@ export const transactionCategoryMap: Record<
       'primary paycheck',
       'business income',
       'repayment from others',
-      'other income',
       'education',
       'gifts & donations',
+      'transfer',
+      'credit card payment',
       'other expenses',
-      'transfers',
-      'salary',
+      'other income',
     ],
     icon: WorkRounded,
   },
 } as const;
+
+export const transactionCategoryIncomeMap: Record<
+  string,
+  { subcategories: string[]; icon: ElementType<SvgIconProps> }
+> = {
+  'Work & Income': {
+    subcategories: ['transfers', 'salary'],
+    icon: WorkRounded,
+  },
+} as const;
+
+// prettier-ignore
+export const currencyList: string[] = [
+  "AED","ALL","AMD","AOA","ARS","AUD","AZN","BBD","BDT","BHD","BMD","BND","BOB","BRL","BSD","BYN","BWP","CAD","CDF","CHF","CLP","CNY","COP","CRC","CZK","DKK","DOP","DZD","EGP","ETB","EUR","FJD","GBP","GEL","GHS","GIP","GTQ","HKD","HNL","HRK","HUF","IDR","ILS","IMP","INR","IQD","ISK","JMD","JPY","JOD","KGS","KHR","KRW","KWD","KYD","KZT","LAK","LBP","LKR","LYD","MAD","MDL","MGA","MKD","MMK","MNT","MOP","MRU","MUR","MXN","MYR","NAD","NGN","NIO","NOK","NZD","OMR","PAB","PEN","PGK","PHP","PKR","PLN","PYG","QAR","RON","RSD","RUB","RWF","SAR","SEK","SGD","SHP","SLL","SOS","SRD","SZL","THB","TJS","TMT","TND","TOP","TRY","TTD","TWD","TZS","UAH","USD","UYU","UZS","VEF","VND","XAF","XCD","XOF","XPF","ZAR","ZMW","ZWD"
+].sort();

@@ -1,16 +1,31 @@
 'use client';
 
-import { Transaction } from '@/components/transactions/consts';
-import { useState } from 'react';
 import {
+  emptyTransaction,
+  Transaction,
+  transactionCategoryIncomeMap,
+  transactionCategoryExpenseMap,
+  TransactionType,
+  currencyList,
+} from '@/components/transactions/consts';
+import { ElementType, useState } from 'react';
+import {
+  Autocomplete,
   Box,
+  Button,
+  FormHelperText,
   Grid,
   InputLabel,
-  Select,
+  Stack,
+  SvgIconProps,
   TextField,
+  Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
+
+import { styled } from '@mui/material/styles';
+import { InfoRounded } from '@mui/icons-material';
 
 export default function TransactionForm({
   initialTransaction: initTx, // shorthand for readability
@@ -20,67 +35,251 @@ export default function TransactionForm({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [merchant, setMerchant] = useState<string>(initTx?.merchant ?? '');
-  const [amount, setAmount] = useState<number>(initTx?.amount ?? 0.0);
-  const [currency, setCurrency] = useState<string>(initTx?.currency ?? '');
-  const [account, setAccount] = useState<string>(initTx?.account ?? '');
-  const [category, setCategory] = useState<string>(initTx?.category ?? '');
-  const [datetime, setDatetime] = useState<string>(initTx?.datetime ?? '');
+  const [transaction, setTransaction] = useState(initTx ?? emptyTransaction);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const validateAll = () => {
-    const newErrors: Record<string, string> = {};
+  /* Params for Category Select*/
 
-    setErrors(newErrors);
+  const transactionCategoryMap =
+    transaction.type === 'income'
+      ? transactionCategoryIncomeMap
+      : transactionCategoryExpenseMap;
+
+  const categoryList: { name: string; icon: ElementType<SvgIconProps> }[] =
+    Object.entries(transactionCategoryMap).map(([name, { icon }]) => ({
+      name,
+      icon,
+    }));
+
+  const activeCategory: string =
+    Object.entries(transactionCategoryMap).find(([, { subcategories }]) =>
+      subcategories.includes(transaction.category),
+    )?.[0] || '';
+
+  const subcategoryList: string[] = activeCategory
+    ? transactionCategoryMap[activeCategory].subcategories
+    : [];
+
+  const updateField = <K extends keyof Transaction>(
+    key: K,
+    value: Transaction[K],
+  ) => {
+    setTransaction((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const onTypeChange = (type: TransactionType) => {
+    updateField('type', type);
+    const categoryMap =
+      type === 'income'
+        ? transactionCategoryIncomeMap
+        : transactionCategoryExpenseMap;
+    const firstCategoryKey = Object.keys(categoryMap)[0];
+    updateField('category', categoryMap[firstCategoryKey].subcategories[0]);
   };
 
   return (
-    <Box
-      sx={{
-        borderRadius: '0.5rem',
-        borderColor: 'background.paper',
-        borderWidth: '2px',
-        margin: '2.5rem',
-        padding: '0.5rem',
-        overflow: 'hidden',
-      }}
-    >
-      <form onSubmit={() => {}}>
-        <Grid container spacing={2}>
-          <Grid size={isMobile ? 12 : 6}>
-            <InputLabel
-              htmlFor='merchant-input-label'
-              sx={{ fontSize: '0.75rem' }}
+    <form onSubmit={() => {}}>
+      <Grid container spacing={1} sx={{ margin: '1rem' }}>
+        <TransactionFormGrid size={12}>
+          <Typography variant='h4' gutterBottom>
+            New Transaction
+          </Typography>
+          <Typography variant='body1' color='text.secondary'>
+            Add details for a new Income or Expense.
+          </Typography>
+        </TransactionFormGrid>
+        <TransactionFormGrid size={12}>
+          <TransactionFormLabel>Transaction Type</TransactionFormLabel>
+          <Stack direction='row' flexWrap='wrap'>
+            <Button
+              key='expense'
+              variant={
+                transaction.type === 'expense' ? 'contained' : 'outlined'
+              }
+              sx={{ m: '0.2rem' }}
+              onClick={() => {
+                onTypeChange('expense');
+              }}
             >
-              Merchant
-            </InputLabel>
+              expense
+            </Button>
+            <Button
+              key='income'
+              variant={transaction.type === 'income' ? 'contained' : 'outlined'}
+              sx={{ m: '0.2rem' }}
+              onClick={() => {
+                onTypeChange('income');
+              }}
+            >
+              income
+            </Button>
+          </Stack>
+        </TransactionFormGrid>
+        <TransactionFormGrid size={isMobile ? 12 : 6}>
+          <TransactionFormLabel>Merchant / Store Name</TransactionFormLabel>
+          <TextField
+            id='merchant-input-label'
+            value={transaction.merchant}
+            onChange={(e) => {
+              updateField('merchant', e.target.value);
+            }}
+            error={!!errors.merchant}
+            fullWidth
+            slotProps={{
+              input: {
+                sx: {
+                  fontSize: 'small',
+                },
+              },
+            }}
+          />
+          <FormHelperText error component='div'>
+            <Box display='flex' alignItems='center' gap={0.5}>
+              <InfoRounded fontSize='small' />
+              Merchant cannot be empty.
+            </Box>
+          </FormHelperText>
+        </TransactionFormGrid>
+        <TransactionFormGrid size={isMobile ? 12 : 6}>
+          <TransactionFormLabel>Account Name</TransactionFormLabel>
+          <TextField
+            id='account-input-label'
+            value={transaction.account}
+            onChange={(e) => {
+              updateField('account', e.target.value);
+            }}
+            error={!!errors.merchant}
+            fullWidth
+            slotProps={{
+              input: {
+                sx: {
+                  fontSize: 'small',
+                },
+              },
+            }}
+          />
+          <FormHelperText error component='div'>
+            <Box display='flex' alignItems='center' gap={0.5}>
+              <InfoRounded fontSize='small' />
+              Account cannot be empty.
+            </Box>
+          </FormHelperText>
+        </TransactionFormGrid>
+        <TransactionFormGrid size={12}>
+          <TransactionFormLabel>Category</TransactionFormLabel>
+          <Stack direction='row' flexWrap='wrap'>
+            {categoryList.map(({ name, icon: Icon }) => (
+              <Button
+                key={name}
+                startIcon={<Icon />}
+                variant={name === activeCategory ? 'contained' : 'outlined'}
+                sx={{ m: '0.2rem' }}
+                onClick={() => {
+                  if (name === activeCategory) return;
+
+                  const defaultSubcategory =
+                    transactionCategoryMap[name].subcategories[0];
+                  updateField('category', defaultSubcategory);
+                }}
+              >
+                {name}
+              </Button>
+            ))}
+          </Stack>
+          <TransactionFormLabel>Subcategory</TransactionFormLabel>
+          <Stack direction='row' flexWrap='wrap'>
+            {(() => {
+              return subcategoryList.map((subcategory: string) => (
+                <Button
+                  key={subcategory}
+                  variant={
+                    transaction.category === subcategory
+                      ? 'contained'
+                      : 'outlined'
+                  }
+                  sx={{ m: '0.2rem' }}
+                  onClick={() => {
+                    updateField('category', subcategory);
+                  }}
+                >
+                  {subcategory}
+                </Button>
+              ));
+            })()}
+          </Stack>
+        </TransactionFormGrid>
+        <TransactionFormGrid size={12}>
+          <TransactionFormLabel>Amount & Currency</TransactionFormLabel>
+          <Box sx={{ display: 'flex' }}>
+            <Autocomplete
+              options={currencyList}
+              slotProps={{
+                listbox: {
+                  style: { fontSize: 'small' },
+                },
+              }}
+              sx={{ width: '10rem' }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  slotProps={{
+                    htmlInput: {
+                      ...params.inputProps,
+                      style: { fontSize: 'small' },
+                    },
+                  }}
+                />
+              )}
+            />
             <TextField
-              id='merchant-input-label'
-              value={merchant}
+              id='amount-input-label'
+              value={transaction.amount}
+              type='number'
               onChange={(e) => {
-                setMerchant(e.target.value);
+                const value = e.target.value;
+                updateField('amount', value === '' ? 0 : Number(value));
               }}
               error={!!errors.merchant}
-              helperText={errors.merchant}
-              sx={{ width: '100%' }}
+              fullWidth
+              slotProps={{
+                input: {
+                  sx: {
+                    fontSize: 'small',
+                  },
+                },
+              }}
             />
-          </Grid>
-          <Grid size={isMobile ? 12 : 6}>
-            <InputLabel id='category-select-label' sx={{ fontSize: '0.75rem' }}>
-              Category
-            </InputLabel>
-            <Select
-              labelId='category-select-label'
-              sx={{ width: '100%' }}
-            ></Select>
-          </Grid>
-        </Grid>
-      </form>
-    </Box>
+          </Box>
+          <FormHelperText error component='div'>
+            <Box display='flex' alignItems='center' gap={0.5}>
+              <InfoRounded fontSize='small' />
+              Amount must be to 2 decimal points.
+            </Box>
+          </FormHelperText>
+        </TransactionFormGrid>
+      </Grid>
+    </form>
   );
 }
 
+const TransactionFormGrid = styled(Grid)(({ theme }) => ({
+  borderRadius: '0.5rem',
+  backgroundColor: theme.palette.background.paper,
+  borderStyle: 'solid',
+  padding: '1rem',
+  overflow: 'hidden',
+}));
+
+const TransactionFormLabel = styled(InputLabel)(({ theme }) => ({
+  width: '100%',
+  marginBottom: '0.4rem',
+}));
+
+// TODO: delete this
 // export interface Transaction {
 //   transaction_id: string;
 //   merchant: string;
