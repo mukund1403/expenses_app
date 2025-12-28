@@ -1,13 +1,15 @@
-import { Transaction } from '@/components/transactions/consts';
-import { getTransactionIcon } from '@/components/transactions/utils';
 import {
   Avatar,
   Box,
+  Fab,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
 } from '@mui/material';
+import { Add } from '@mui/icons-material';
+import { Transaction } from '@/components/transactions/consts';
+import { getTransactionIcon } from '@/components/transactions/utils';
 import CurrencyAmountItem from '@/components/transactions/CurrencyAmountItem';
 
 export default function TransactionList({
@@ -87,6 +89,19 @@ export default function TransactionList({
           );
         })}
       </List>
+      <Fab
+        color='primary'
+        aria-label='add-transaction'
+        href='/transactions/create'
+        sx={{
+          position: 'fixed',
+          bottom: { xs: 71, sm: 16 }, // TODO: Find more robust way to float button
+          right: 16,
+          zIndex: 10,
+        }}
+      >
+        <Add />
+      </Fab>
     </Box>
   );
 }
