@@ -14,12 +14,14 @@ import {
 export function getTransactionIcon(
   subcategory: string,
 ): ElementType<SvgIconProps> {
-  for (const category of Object.values({
-    ...transactionCategoryIncomeMap,
-    ...transactionCategoryExpenseMap,
-  })) {
-    if (category.subcategories.includes(subcategory)) {
-      return category.icon;
+  for (const map of [
+    transactionCategoryIncomeMap,
+    transactionCategoryExpenseMap,
+  ]) {
+    for (const category of Object.values(map)) {
+      if (category.subcategories.includes(subcategory)) {
+        return category.icon;
+      }
     }
   }
 
