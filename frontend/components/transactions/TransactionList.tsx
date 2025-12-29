@@ -2,12 +2,13 @@ import {
   Avatar,
   Box,
   Fab,
+  IconButton,
   List,
   ListItem,
   ListItemAvatar,
   ListItemText,
 } from '@mui/material';
-import { Add } from '@mui/icons-material';
+import { Add, EditRounded } from '@mui/icons-material';
 import { Transaction } from '@/components/transactions/consts';
 import { getTransactionIcon } from '@/components/transactions/utils';
 import CurrencyAmountItem from '@/components/transactions/CurrencyAmountItem';
@@ -51,9 +52,15 @@ export default function TransactionList({
           return (
             <ListItem
               key={transaction_id}
-              component='a'
-              href={`/transactions/edit?transaction_id=${transaction_id}`}
               divider
+              secondaryAction={
+                <IconButton
+                  href={`/transactions/edit?transaction_id=${transaction_id}`}
+                  size='small'
+                >
+                  <EditRounded />
+                </IconButton>
+              }
             >
               <ListItemAvatar>
                 <Avatar
@@ -77,6 +84,7 @@ export default function TransactionList({
                   flexDirection: { xs: 'column', sm: 'row' },
                   alignItems: { xs: 'flex-start', sm: 'center' },
                   width: '100%',
+                  pr: '0.4rem', // add space between `ListItem` and `secondaryAction`
                 }}
               >
                 <ListItemText
