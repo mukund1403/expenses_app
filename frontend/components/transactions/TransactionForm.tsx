@@ -17,6 +17,7 @@ import {
 import { styled } from '@mui/material/styles';
 import {
   InfoRounded,
+  DeleteRounded,
   DriveFolderUploadRounded,
   RestartAltRounded,
 } from '@mui/icons-material';
@@ -37,6 +38,7 @@ import {
 } from '@/components/transactions/utils';
 import postTransactionAction from '@/app/(sidebar)/transactions/create/postTransactionAction';
 import putTransactionAction from '@/app/(sidebar)/transactions/edit/putTransactionAction';
+import deleteTransactionAction from '@/app/(sidebar)/transactions/edit/deleteTransactionAction';
 
 type TransactionFormProps =
   | { type: 'create'; initialTransaction: null }
@@ -342,6 +344,7 @@ export default function TransactionForm({
                   onBlur: createBlurHandler('datetime'),
                   error: !!errors.datetime,
                   InputProps: {
+                    id: 'datetime-input-label',
                     sx: {
                       fontSize: 'small',
                     },
@@ -364,26 +367,46 @@ export default function TransactionForm({
           </FormHelperText>
         </TransactionFormGrid>
         <TransactionFormGrid size={12}>
-          <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
-            <Button
-              variant='text'
-              color='primary'
-              startIcon={<RestartAltRounded />}
-              onClick={handleReset}
-              fullWidth
-            >
-              Reset
-            </Button>
-            <Button
-              type='submit'
-              variant='contained'
-              color='primary'
-              startIcon={<DriveFolderUploadRounded />}
-              fullWidth
-            >
-              Submit
-            </Button>
-          </Stack>
+          <Grid container spacing={1}>
+            <Grid size={isMobile || type === 'create' ? 12 : 6}>
+              <Button
+                variant='text'
+                color='primary'
+                startIcon={<RestartAltRounded />}
+                onClick={handleReset}
+                fullWidth
+              >
+                Reset
+              </Button>
+            </Grid>
+            {type === 'edit' && (
+              <Grid size={isMobile ? 12 : 6}>
+                <Button
+                  variant='text'
+                  color='error'
+                  startIcon={<DeleteRounded />}
+                  onClick={() => {
+                    transaction.transaction_id &&
+                      deleteTransactionAction(transaction.transaction_id);
+                  }}
+                  fullWidth
+                >
+                  Delete
+                </Button>
+              </Grid>
+            )}
+            <Grid size={12}>
+              <Button
+                type='submit'
+                variant='contained'
+                color='primary'
+                startIcon={<DriveFolderUploadRounded />}
+                fullWidth
+              >
+                Submit
+              </Button>
+            </Grid>
+          </Grid>
         </TransactionFormGrid>
       </Grid>
     </form>
