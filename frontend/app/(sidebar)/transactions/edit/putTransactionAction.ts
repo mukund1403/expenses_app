@@ -2,10 +2,22 @@
 
 import { Transaction } from '@/components/transactions/consts';
 import { cookies } from 'next/headers';
+import { getUpdatedFields } from '@/utils/utils';
 
-const submitTransactionAction = async (
-  transaction: Transaction,
+const putTransactionAction = async (
+  updatedTransaction: Transaction,
+  initialTransaction: Transaction,
 ): Promise<void> => {
+  const updatedFields = getUpdatedFields(
+    updatedTransaction,
+    initialTransaction,
+    ['transaction_id'],
+  );
+  const payload = {
+    transaction_id: initialTransaction.transaction_id,
+    ...updatedFields,
+  };
+
   const cookie = await cookies();
   return new Promise(async (resolve, reject) => {
     try {
@@ -16,8 +28,8 @@ const submitTransactionAction = async (
             'Content-Type': 'application/json',
             Cookie: cookie.toString(),
           },
-          body: JSON.stringify(transaction),
-          method: 'POST',
+          body: JSON.stringify(payload),
+          method: 'PUT',
           cache: 'no-store',
           redirect: 'manual',
         },
@@ -35,4 +47,4 @@ const submitTransactionAction = async (
   });
 };
 
-export default submitTransactionAction;
+export default putTransactionAction;

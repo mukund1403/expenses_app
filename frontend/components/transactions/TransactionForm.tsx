@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  emptyTransaction,
-  Transaction,
-  transactionCategoryIncomeMap,
-  transactionCategoryExpenseMap,
-  TransactionType,
-  currencyList,
-} from '@/components/transactions/consts';
-import { ElementType, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Autocomplete,
   Box,
@@ -17,25 +9,43 @@ import {
   Grid,
   InputLabel,
   Stack,
-  SvgIconProps,
   TextField,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import submitTransactionAction from '@/app/(sidebar)/transactions/create/submitTransactionAction';
-
 import { styled } from '@mui/material/styles';
-import { InfoRounded } from '@mui/icons-material';
+import {
+  InfoRounded,
+  DriveFolderUploadRounded,
+  RestartAltRounded,
+} from '@mui/icons-material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { Dayjs } from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import {
+  emptyTransaction,
+  Transaction,
+  transactionCategoryIncomeMap,
+  transactionCategoryExpenseMap,
+  TransactionType,
+  currencyList,
+} from '@/components/transactions/consts';
+import {
+  validateTransactionField,
+  validateTransaction,
+} from '@/components/transactions/utils';
+import postTransactionAction from '@/app/(sidebar)/transactions/create/postTransactionAction';
+import putTransactionAction from '@/app/(sidebar)/transactions/edit/putTransactionAction';
+
+type TransactionFormProps =
+  | { type: 'create'; initialTransaction: null }
+  | { type: 'edit'; initialTransaction: Transaction };
 
 export default function TransactionForm({
   initialTransaction: initTx, // shorthand for readability
-}: {
-  initialTransaction: Transaction | null;
-}) {
+  type,
+}: TransactionFormProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -43,29 +53,38 @@ export default function TransactionForm({
     (initTx as Transaction) ?? emptyTransaction,
   );
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof Transaction, string>>
+  >({});
 
   /* Params for Category Select*/
 
-  const transactionCategoryMap =
-    transaction.type === 'income'
+  const transactionCategoryMap = useMemo(() => {
+    return transaction.type === 'income'
       ? transactionCategoryIncomeMap
       : transactionCategoryExpenseMap;
+  }, [transaction.type]);
 
-  const categoryList: { name: string; icon: ElementType<SvgIconProps> }[] =
-    Object.entries(transactionCategoryMap).map(([name, { icon }]) => ({
+  const categoryList = useMemo(() => {
+    return Object.entries(transactionCategoryMap).map(([name, { icon }]) => ({
       name,
       icon,
     }));
+  }, [transactionCategoryMap]);
 
-  const activeCategory: string =
-    Object.entries(transactionCategoryMap).find(([, { subcategories }]) =>
-      subcategories.includes(transaction.category),
-    )?.[0] || '';
+  const activeCategory = useMemo(() => {
+    return (
+      Object.entries(transactionCategoryMap).find(([, { subcategories }]) =>
+        subcategories.includes(transaction.category),
+      )?.[0] ?? ''
+    );
+  }, [transactionCategoryMap, transaction.category]);
 
-  const subcategoryList: string[] = activeCategory
-    ? transactionCategoryMap[activeCategory].subcategories
-    : [];
+  const subcategoryList = useMemo(() => {
+    return activeCategory
+      ? transactionCategoryMap[activeCategory].subcategories
+      : [];
+  }, [activeCategory, transactionCategoryMap]);
 
   const updateField = <K extends keyof Transaction>(
     key: K,
@@ -77,6 +96,16 @@ export default function TransactionForm({
     }));
   };
 
+  const createBlurHandler =
+    <K extends keyof Transaction>(field: K) =>
+    () => {
+      const error = validateTransactionField(field, transaction[field]);
+      setErrors((prev) => ({
+        ...prev,
+        [field]: error ?? '',
+      }));
+    };
+
   const onTypeChange = (type: TransactionType) => {
     updateField('type', type as TransactionType);
     const categoryMap =
@@ -87,15 +116,35 @@ export default function TransactionForm({
     updateField('category', categoryMap[firstCategoryKey].subcategories[0]);
   };
 
+  const handleReset = () => {
+    setTransaction((initTx as Transaction) ?? emptyTransaction);
+  };
+
   return (
-    <form onSubmit={() => {}}>
-      <Grid container spacing={1} sx={{ margin: '1rem' }}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const newErrors = validateTransaction(transaction);
+        setErrors(newErrors);
+
+        if (Object.keys(newErrors).length === 0) {
+          if (type === 'create') {
+            postTransactionAction(transaction);
+          } else {
+            putTransactionAction(transaction, initTx);
+          }
+        }
+      }}
+    >
+      <Grid container spacing={1} sx={{ margin: '0.5rem' }}>
         <TransactionFormGrid size={12}>
           <Typography variant='h4' gutterBottom>
-            New Transaction
+            {type === 'create' ? 'New Transaction' : 'Edit Transaction'}
           </Typography>
           <Typography variant='body1' color='text.secondary'>
-            Add details for a new Income or Expense.
+            {type === 'create'
+              ? 'Add details for a new Income or Expense.'
+              : 'Edit details of an existing Income or Expense.'}
           </Typography>
         </TransactionFormGrid>
         <TransactionFormGrid size={12}>
@@ -133,6 +182,7 @@ export default function TransactionForm({
             onChange={(e) => {
               updateField('merchant', e.target.value);
             }}
+            onBlur={createBlurHandler('merchant')}
             error={!!errors.merchant}
             fullWidth
             slotProps={{
@@ -144,10 +194,12 @@ export default function TransactionForm({
             }}
           />
           <FormHelperText error component='div'>
-            <Box display='flex' alignItems='center' gap={0.5}>
-              <InfoRounded fontSize='small' />
-              Merchant cannot be empty.
-            </Box>
+            {errors.merchant && (
+              <Box display='flex' alignItems='center' gap={0.5}>
+                <InfoRounded fontSize='small' />
+                {errors.merchant}
+              </Box>
+            )}
           </FormHelperText>
         </TransactionFormGrid>
         <TransactionFormGrid size={isMobile ? 12 : 6}>
@@ -158,7 +210,8 @@ export default function TransactionForm({
             onChange={(e) => {
               updateField('account', e.target.value);
             }}
-            error={!!errors.merchant}
+            onBlur={createBlurHandler('account')}
+            error={!!errors.account}
             fullWidth
             slotProps={{
               input: {
@@ -169,10 +222,12 @@ export default function TransactionForm({
             }}
           />
           <FormHelperText error component='div'>
-            <Box display='flex' alignItems='center' gap={0.5}>
-              <InfoRounded fontSize='small' />
-              Account cannot be empty.
-            </Box>
+            {errors.account && (
+              <Box display='flex' alignItems='center' gap={0.5}>
+                <InfoRounded fontSize='small' />
+                {errors.account}
+              </Box>
+            )}
           </FormHelperText>
         </TransactionFormGrid>
         <TransactionFormGrid size={12}>
@@ -222,10 +277,13 @@ export default function TransactionForm({
           <TransactionFormLabel>Amount & Currency</TransactionFormLabel>
           <Box sx={{ display: 'flex' }}>
             <Autocomplete
+              id='currency-input-label'
+              value={transaction.currency ?? ''}
               options={currencyList}
               onChange={(e, value) => {
                 updateField('currency', value ?? '');
               }}
+              onBlur={createBlurHandler('currency')}
               slotProps={{
                 listbox: {
                   style: { fontSize: 'small' },
@@ -252,7 +310,8 @@ export default function TransactionForm({
                 const value = e.target.value;
                 updateField('amount', value === '' ? 0 : Number(value));
               }}
-              error={!!errors.merchant}
+              onBlur={createBlurHandler('amount')}
+              error={!!errors.amount}
               fullWidth
               slotProps={{
                 input: {
@@ -264,18 +323,24 @@ export default function TransactionForm({
             />
           </Box>
           <FormHelperText error component='div'>
-            <Box display='flex' alignItems='center' gap={0.5}>
-              <InfoRounded fontSize='small' />
-              Amount must be to 2 decimal points.
-            </Box>
+            {(errors.currency || errors.amount) && (
+              <Box display='flex' alignItems='center' gap={0.5}>
+                <InfoRounded fontSize='small' />
+                {errors.currency ? errors.currency : errors.amount}
+              </Box>
+            )}
           </FormHelperText>
         </TransactionFormGrid>
         <TransactionFormGrid size={12}>
+          <TransactionFormLabel>Date</TransactionFormLabel>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DatePicker
+              value={transaction.datetime ? dayjs(transaction.datetime) : null}
               sx={{ width: '100%' }}
               slotProps={{
                 textField: {
+                  onBlur: createBlurHandler('datetime'),
+                  error: !!errors.datetime,
                   InputProps: {
                     sx: {
                       fontSize: 'small',
@@ -289,31 +354,36 @@ export default function TransactionForm({
               }}
             />
           </LocalizationProvider>
+          <FormHelperText error component='div'>
+            {errors.datetime && (
+              <Box display='flex' alignItems='center' gap={0.5}>
+                <InfoRounded fontSize='small' />
+                {errors.datetime}
+              </Box>
+            )}
+          </FormHelperText>
         </TransactionFormGrid>
         <TransactionFormGrid size={12}>
-          <Button
-            variant='contained'
-            color='primary'
-            fullWidth
-            onClick={() => {
-              // TODO: Implement validation properly with error strings
-              // TODO: Display errors properly in Modal
-              const newErrors: Record<string, string> = {};
-              if (!transaction.merchant)
-                newErrors.merchant = 'Merchant cannot be empty';
-              if (!transaction.account)
-                newErrors.account = 'Account cannot be empty';
-              if (!transaction.amount)
-                newErrors.amount = 'Amount cannot be zero';
-              setErrors(newErrors);
-
-              if (Object.keys(newErrors).length === 0) {
-                submitTransactionAction(transaction);
-              }
-            }}
-          >
-            Submit
-          </Button>
+          <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
+            <Button
+              variant='text'
+              color='primary'
+              startIcon={<RestartAltRounded />}
+              onClick={handleReset}
+              fullWidth
+            >
+              Reset
+            </Button>
+            <Button
+              type='submit'
+              variant='contained'
+              color='primary'
+              startIcon={<DriveFolderUploadRounded />}
+              fullWidth
+            >
+              Submit
+            </Button>
+          </Stack>
         </TransactionFormGrid>
       </Grid>
     </form>

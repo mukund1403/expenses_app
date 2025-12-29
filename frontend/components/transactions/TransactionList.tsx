@@ -49,7 +49,12 @@ export default function TransactionList({
           const formattedAmount = amount.toFixed(2);
 
           return (
-            <ListItem key={transaction_id} divider>
+            <ListItem
+              key={transaction_id}
+              component='a'
+              href={`/transactions/edit?transaction_id=${transaction_id}`}
+              divider
+            >
               <ListItemAvatar>
                 <Avatar
                   sx={{
