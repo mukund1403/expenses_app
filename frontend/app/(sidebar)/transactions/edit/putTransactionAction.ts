@@ -38,11 +38,11 @@ const putTransactionAction = async (
       if (res.ok) {
         resolve();
       } else {
-        reject(new Error('Failed to submit Transaction'));
+        reject(new Error('Failed to Update Transaction.'));
       }
     } catch (err) {
       // TODO: Handle errors properly
-      reject(new Error('Failed to submit Transaction'));
+      reject(new Error('Failed to Update Transaction.'));
     }
   });
 };

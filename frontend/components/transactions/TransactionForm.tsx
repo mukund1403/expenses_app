@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import {
   Autocomplete,
@@ -39,6 +40,7 @@ import {
 import postTransactionAction from '@/app/(sidebar)/transactions/create/postTransactionAction';
 import putTransactionAction from '@/app/(sidebar)/transactions/edit/putTransactionAction';
 import deleteTransactionAction from '@/app/(sidebar)/transactions/edit/deleteTransactionAction';
+import { useNotification } from '@/providers/NotificationProvider';
 
 type TransactionFormProps =
   | { type: 'create'; initialTransaction: null }
@@ -50,6 +52,10 @@ export default function TransactionForm({
 }: TransactionFormProps) {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const { showSnackbar } = useNotification();
+
+  const router = useRouter();
 
   const [transaction, setTransaction] = useState<Transaction>(
     (initTx as Transaction) ?? emptyTransaction,
@@ -118,24 +124,77 @@ export default function TransactionForm({
     updateField('category', categoryMap[firstCategoryKey].subcategories[0]);
   };
 
+  /* Button Press Handlers */
+
   const handleReset = () => {
     setTransaction((initTx as Transaction) ?? emptyTransaction);
+  };
+
+  const handleDelete = () => {
+    if (transaction.transaction_id) {
+      deleteTransactionAction(transaction.transaction_id)
+        .then(() => {
+          showSnackbar('Transaction Deleted Successfully.', 'success');
+          router.push('/transactions');
+        })
+        .catch((err: unknown) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Failed to Delete Transaction.';
+          showSnackbar(message, 'error');
+        });
+    }
+  };
+
+  const handleSubmit = () => {
+    const newErrors = validateTransaction(transaction);
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length !== 0) {
+      showSnackbar(
+        'Some fields are invalid. Please review and try again.',
+        'error',
+      );
+      return;
+    }
+
+    if (type === 'create') {
+      postTransactionAction(transaction)
+        .then(() => {
+          showSnackbar('Transaction Created Successfully.', 'success');
+          router.push('/transactions');
+        })
+        .catch((err: unknown) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Failed to Create Transaction.';
+          showSnackbar(message, 'error');
+        });
+    }
+
+    if (type === 'edit') {
+      putTransactionAction(transaction, initTx)
+        .then(() => {
+          showSnackbar('Transaction Updated Successfully.', 'success');
+          router.push('/transactions');
+        })
+        .catch((err: unknown) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Failed to Update Transaction.';
+          showSnackbar(message, 'error');
+        });
+    }
   };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const newErrors = validateTransaction(transaction);
-        setErrors(newErrors);
-
-        if (Object.keys(newErrors).length === 0) {
-          if (type === 'create') {
-            postTransactionAction(transaction);
-          } else {
-            putTransactionAction(transaction, initTx);
-          }
-        }
+        handleSubmit();
       }}
     >
       <Grid container spacing={1} sx={{ margin: '0.5rem' }}>
@@ -309,6 +368,7 @@ export default function TransactionForm({
               value={transaction.amount}
               type='number'
               onChange={(e) => {
+                // TODO: Find more robust way to enforce Float X.XX
                 const value = e.target.value;
                 updateField('amount', value === '' ? 0 : Number(value));
               }}
@@ -385,10 +445,7 @@ export default function TransactionForm({
                   variant='text'
                   color='error'
                   startIcon={<DeleteRounded />}
-                  onClick={() => {
-                    transaction.transaction_id &&
-                      deleteTransactionAction(transaction.transaction_id);
-                  }}
+                  onClick={handleDelete}
                   fullWidth
                 >
                   Delete
