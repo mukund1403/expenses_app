@@ -476,6 +476,7 @@ const TransactionFormGrid = styled(Grid)(({ theme }) => ({
   borderStyle: 'solid',
   padding: '1rem',
   overflow: 'hidden',
+  boxShadow: theme.shadows[3],
 }));
 
 const TransactionFormLabel = styled(InputLabel)(({ theme }) => ({

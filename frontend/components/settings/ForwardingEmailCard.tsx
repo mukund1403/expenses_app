@@ -32,6 +32,7 @@ export default function ForwardingEmailCard({ forwardingEmail }: Props) {
         backgroundColor: 'background.paper',
         margin: '0.5rem',
         overflow: 'hidden',
+        boxShadow: 3,
       }}
     >
       <CardContent>

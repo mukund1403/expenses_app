@@ -13,6 +13,7 @@ export default function UserDetailsCard({ name, registeredEmail }: Props) {
         backgroundColor: 'background.paper',
         margin: '0.5rem',
         overflow: 'hidden',
+        boxShadow: 3,
       }}
     >
       <CardContent>

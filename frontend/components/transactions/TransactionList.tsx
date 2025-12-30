@@ -25,6 +25,7 @@ export default function TransactionList({
         backgroundColor: 'background.paper',
         margin: '0.5rem',
         overflow: 'hidden',
+        boxShadow: 3,
       }}
     >
       <List disablePadding>

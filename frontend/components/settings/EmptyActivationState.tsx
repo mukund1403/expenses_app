@@ -16,6 +16,7 @@ export default function EmptyActivationState({
         backgroundColor: 'background.paper',
         margin: '0.5rem',
         overflow: 'hidden',
+        boxShadow: 3,
       }}
     >
       <CardContent>
