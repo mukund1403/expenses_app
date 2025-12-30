@@ -44,7 +44,6 @@ export default async function TransactionsPage() {
     );
     currencySummaryList = getCurrencySummaryList(transactionList);
   } catch (e) {
-    console.log(e)
     return <Alert severity='error'>Failed to fetch transaction data.</Alert>;
   }
 

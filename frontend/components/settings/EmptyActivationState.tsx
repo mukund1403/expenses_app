@@ -1,5 +1,3 @@
-'use client';
-
 import { Card, CardContent, Typography, Link, Stack } from '@mui/material';
 
 type Props = {
@@ -12,19 +10,26 @@ export default function EmptyActivationState({
   getStartedHref,
 }: Props) {
   return (
-    <Card>
+    <Card
+      sx={{
+        borderRadius: '0.5rem',
+        backgroundColor: 'background.paper',
+        margin: '0.5rem',
+        overflow: 'hidden',
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant='h6' gutterBottom>
           Activation Link
         </Typography>
 
         <Stack spacing={1}>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant='body2' color='text.secondary'>
             {message || 'You have not set up auto-forwarding yet.'}
           </Typography>
 
-          <Typography variant="body2">
-            <Link href={getStartedHref} underline="hover">
+          <Typography variant='body2'>
+            <Link href={getStartedHref} underline='hover'>
               Click here to get started
             </Link>{' '}
             to learn how to set it up.

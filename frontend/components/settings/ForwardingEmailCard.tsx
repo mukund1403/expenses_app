@@ -1,6 +1,13 @@
 'use client';
 
-import { Card, CardContent, Typography, Stack, IconButton, Tooltip } from '@mui/material';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Stack,
+  IconButton,
+  Tooltip,
+} from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import { useState } from 'react';
@@ -19,19 +26,26 @@ export default function ForwardingEmailCard({ forwardingEmail }: Props) {
   };
 
   return (
-    <Card sx={{ mb: 3 }}>
+    <Card
+      sx={{
+        borderRadius: '0.5rem',
+        backgroundColor: 'background.paper',
+        margin: '0.5rem',
+        overflow: 'hidden',
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" gutterBottom>
+        <Typography variant='h6' gutterBottom>
           Your Forwarding Email
         </Typography>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
           Auto-forward your bank transaction emails to this address.
         </Typography>
 
-        <Stack direction="row" alignItems="center" spacing={1}>
+        <Stack direction='row' alignItems='center' spacing={1}>
           <Typography
-            variant="body1"
+            variant='body1'
             sx={{
               fontFamily: 'monospace',
               wordBreak: 'break-all',
@@ -41,8 +55,8 @@ export default function ForwardingEmailCard({ forwardingEmail }: Props) {
           </Typography>
 
           <Tooltip title={copied ? 'Copied!' : 'Copy'}>
-            <IconButton size="small" onClick={handleCopy}>
-              {copied ? <CheckIcon color="success" /> : <ContentCopyIcon />}
+            <IconButton size='small' onClick={handleCopy}>
+              {copied ? <CheckIcon color='success' /> : <ContentCopyIcon />}
             </IconButton>
           </Tooltip>
         </Stack>

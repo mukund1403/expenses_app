@@ -34,7 +34,7 @@ export default async function SettingsPage() {
       method: 'GET',
       cache: 'no-store',
       redirect: 'manual',
-    }
+    },
   );
 
   // Handle auth redirects
@@ -53,7 +53,7 @@ export default async function SettingsPage() {
     userDetails = await userRes.json();
   } catch (e) {
     return (
-      <Alert severity="error">
+      <Alert severity='error'>
         Failed to retrieve user details. Please try again later.
       </Alert>
     );
@@ -74,7 +74,7 @@ export default async function SettingsPage() {
         },
         method: 'GET',
         cache: 'no-store',
-      }
+      },
     );
 
     if (activationRes.ok) {
@@ -100,16 +100,14 @@ export default async function SettingsPage() {
         registeredEmail={userDetails.registered_email}
       />
 
-      <ForwardingEmailCard
-        forwardingEmail={userDetails.forwarding_email}
-      />
+      <ForwardingEmailCard forwardingEmail={userDetails.forwarding_email} />
 
       {activationLink ? (
         <ActivationLinkCard activationLink={activationLink} />
       ) : (
         <EmptyActivationState
           message={activationError ?? ''}
-          getStartedHref="/get_started"
+          getStartedHref='/settings/get_started'
         />
       )}
     </>
