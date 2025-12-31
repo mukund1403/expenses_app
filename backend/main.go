@@ -21,11 +21,15 @@ func init() {
 func main() {
 	// server.Default() creates a Hertz with recovery middleware.
 	// If you need a pure hertz, you can use server.New()
-	serverUrl := os.Getenv("GOLANG_SERVER")
+	appEnv := os.Getenv("APP_ENV")
+	serverURL := "0.0.0.0:8080"
+	if appEnv == "dev" {
+		serverURL = "127.0.0.1:8080"
+	}
 	h := server.Default(
-		server.WithHostPorts(serverUrl),
+		server.WithHostPorts(serverURL),
 	)
-	corsAllowedDomain := []string{os.Getenv("CORS_ALLOWED_DOMAIN")}
+	corsAllowedDomain := []string{os.Getenv("FRONTEND_URL")}
 	h.Use(cors.New(cors.Config{
 		AllowOrigins:     corsAllowedDomain,                                             // Allowed domains, need to bring schema
 		AllowMethods:     []string{"PUT", "POST"},                                       // Allowed request methods
