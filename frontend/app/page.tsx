@@ -3,7 +3,7 @@
 import { Typography, Box, Button, Link } from '@mui/material';
 import { useEffect, useRef } from 'react';
 
-export default function HomePage() {
+export default function LandingPage() {
   const textRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -86,11 +86,7 @@ export default function HomePage() {
           AutoEx
         </Typography>
 
-        <Typography
-          variant='h5'
-          fontFamily='monospace'
-          // sx={{ lineHeight: '1.2em' }}
-        >
+        <Typography variant='h5' fontFamily='monospace'>
           <span
             style={{
               display: 'inline-flex',
@@ -107,7 +103,7 @@ export default function HomePage() {
       {/* Bottom button */}
       <Button
         component={Link}
-        href='/transactions'
+        href='/home'
         variant='contained'
         size='large'
         sx={{ mb: 4, px: 5 }}

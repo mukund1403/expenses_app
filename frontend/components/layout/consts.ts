@@ -16,9 +16,9 @@ export interface NavItem {
 
 export const navItems: readonly NavItem[] = [
   { label: 'Home', href: '/home', icon: HomeRounded },
+  { label: 'Transactions', href: '/transactions', icon: ReceiptRounded },
   { label: 'Analytics', href: '/analytics', icon: AutoGraphRounded },
   { label: 'Budgets', href: '/budgets', icon: AccountBalanceWalletRounded },
-  { label: 'Transactions', href: '/transactions', icon: ReceiptRounded },
   {
     label: 'Settings',
     href: '/settings',
