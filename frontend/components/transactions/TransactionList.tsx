@@ -112,6 +112,7 @@ export default function TransactionList({
           bottom: { xs: 71, sm: 16 }, // TODO: Find more robust way to float button
           right: 16,
           zIndex: 10,
+          color: 'text.primary',
         }}
       >
         <Add />

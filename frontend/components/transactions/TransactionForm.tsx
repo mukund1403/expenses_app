@@ -216,7 +216,13 @@ export default function TransactionForm({
               variant={
                 transaction.type === 'expense' ? 'contained' : 'outlined'
               }
-              sx={{ m: '0.2rem' }}
+              sx={{
+                m: '0.2rem',
+                color:
+                  transaction.type === 'expense'
+                    ? 'text.primary'
+                    : 'primary.main',
+              }}
               onClick={() => {
                 onTypeChange('expense');
               }}
@@ -226,7 +232,13 @@ export default function TransactionForm({
             <Button
               key='income'
               variant={transaction.type === 'income' ? 'contained' : 'outlined'}
-              sx={{ m: '0.2rem' }}
+              sx={{
+                m: '0.2rem',
+                color:
+                  transaction.type === 'income'
+                    ? 'text.primary'
+                    : 'primary.main',
+              }}
               onClick={() => {
                 onTypeChange('income');
               }}
@@ -299,7 +311,11 @@ export default function TransactionForm({
                 key={name}
                 startIcon={<Icon />}
                 variant={name === activeCategory ? 'contained' : 'outlined'}
-                sx={{ m: '0.2rem' }}
+                sx={{
+                  m: '0.2rem',
+                  color:
+                    name === activeCategory ? 'text.primary' : 'primary.main',
+                }}
                 onClick={() => {
                   if (name === activeCategory) return;
 
@@ -323,7 +339,13 @@ export default function TransactionForm({
                       ? 'contained'
                       : 'outlined'
                   }
-                  sx={{ m: '0.2rem' }}
+                  sx={{
+                    m: '0.2rem',
+                    color:
+                      transaction.category === subcategory
+                        ? 'text.primary'
+                        : 'primary.main',
+                  }}
                   onClick={() => {
                     updateField('category', subcategory);
                   }}
@@ -360,6 +382,7 @@ export default function TransactionForm({
                       style: { fontSize: 'small' },
                     },
                   }}
+                  error={!!errors.currency}
                 />
               )}
             />
@@ -456,8 +479,11 @@ export default function TransactionForm({
               <Button
                 type='submit'
                 variant='contained'
-                color='primary'
                 startIcon={<DriveFolderUploadRounded />}
+                sx={{
+                  color: 'text.primary',
+                  backgroundColor: 'primary.main',
+                }}
                 fullWidth
               >
                 Submit
