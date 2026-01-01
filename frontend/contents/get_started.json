@@ -41,7 +41,7 @@
   },
 
   "autoForwarding": {
-    "heading": "Setting up Auto-forwarding in Gmail",
+    "heading": "Auto-forwarding in Gmail",
     "sections": [
       {
         "heading": "Get your Unique Forwarding Email Address",
@@ -68,7 +68,7 @@
           "Click 'Add a forwarding address' and paste your unique forwarding email.",
           "Click Next → Proceed → OK."
         ],
-        "note": "You will see a popup asking you to verify forwarding.",
+        "notes": ["You will see a popup asking you to verify forwarding."],
         "images": [
           {
             "alt": "Adding forwarding address",
