@@ -30,7 +30,7 @@ What you need to do is:
 
 - Find your Forwarding Address
 Go to `Settings -> Your unique Forwarding Address` and copy the address </br>
-(image)
+![Unique forwarding address](frontend/public/unique_forwarding_address.png)
 
 ### 2. Open Gmail Settings
 - Go to your Gmail settings and click `See all settings`

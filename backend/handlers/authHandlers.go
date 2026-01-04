@@ -113,14 +113,14 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	}
 	maxAge := 24 * 60 * 60 // 1 day
 	c.SetCookie(
-		"token",                        // name
-		jwtStr,                         // value
-		maxAge,                         // maxAge in seconds
-		"/",                            // path
-		"",                             // domain (empty = current domain)
-		protocol.CookieSameSiteLaxMode, // sameSite lax
-		secure,                         // secure (true in prod with HTTPS)
-		true,                           // httpOnly
+		"token",                         // name
+		jwtStr,                          // value
+		maxAge,                          // maxAge in seconds
+		"/",                             // path
+		"",                              // domain (empty = current domain)
+		protocol.CookieSameSiteNoneMode, // sameSite lax
+		secure,                          // secure (true in prod with HTTPS)
+		true,                            // httpOnly
 	)
 
 	// 8) Redirect back to frontend (optional: include a short-lived state or deep link)
@@ -147,14 +147,14 @@ func LogoutHandler(ctx context.Context, c *app.RequestContext) {
 	}
 
 	c.SetCookie(
-		"token",                        // name
-		"",                             // value
-		-1,                             // maxAge in seconds
-		"/",                            // path
-		"",                             // domain (empty = current domain)
-		protocol.CookieSameSiteLaxMode, // sameSite lax
-		secure,                         // secure (true in prod with HTTPS)
-		true,                           // httpOnly
+		"token",                         // name
+		"",                              // value
+		-1,                              // maxAge in seconds
+		"/",                             // path
+		"",                              // domain (empty = current domain)
+		protocol.CookieSameSiteNoneMode, // sameSite lax
+		secure,                          // secure (true in prod with HTTPS)
+		true,                            // httpOnly
 	)
 	frontend := os.Getenv("FRONTEND_URL")
 	if frontend == "" {
