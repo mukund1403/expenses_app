@@ -7,6 +7,7 @@ export function TestingFilterCard() {
   return (
     <Card
       sx={{
+        maxWidth: '1000px',
         borderRadius: '0.5rem',
         backgroundColor: 'background.paper',
         margin: '0.5rem',

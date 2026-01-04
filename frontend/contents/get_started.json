@@ -45,11 +45,7 @@
           "Since the transaction limit is set to $0, you may receive a large volume of emails.",
           "We recommend creating a rule to move transaction alert emails into a separate folder.",
           "After setting up forwarding and filters, you may choose 'Archive Gmail’s copy' or 'Delete Gmail’s copy' (not recommended)."
-        ],
-        "image": {
-          "alt": "Archive or delete Gmail copy",
-          "src": "frontend/public/gmail_email_options.png"
-        }
+        ]
       }
     ]
   },

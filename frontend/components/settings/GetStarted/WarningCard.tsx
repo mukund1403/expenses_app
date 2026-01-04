@@ -7,6 +7,7 @@ export function WarningCard() {
   return (
     <Card
       sx={{
+        maxWidth: '1000px',
         borderRadius: '0.5rem',
         borderWidth: '2px',
         borderColor: 'error.main',
