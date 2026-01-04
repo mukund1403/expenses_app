@@ -1,154 +1,158 @@
 {
   "intro": {
     "heading": "Getting Started",
-    "subheading1": "Our app allows you to keep track of expenses without having to manually update them!",
-    "subheading2": "To do this we require you to do 2 things:",
+    "text": [
+      "Our app allows you to keep track of expenses without having to manually update them!",
+      "To do this we require you to do 2 things:"
+    ],
     "steps": [
-      "Set up email transaction alerts from your own bank.",
-      "Set up auto forwarding from your email to your unique forwarding email that we assign you."
+      {
+        "text": ["Set up email transaction alerts from your own bank."]
+      },
+      {
+        "text": [
+          "Set up auto forwarding from your email to your unique forwarding email that we assign you."
+        ]
+      }
     ]
   },
 
   "emailAlerts": {
     "heading": "Email Transaction Alerts",
-    "description": "Most banks provide email transaction alerts for transactions over a certain limit (e.g. $200).",
     "steps": [
       {
-        "text": "Find out how to change the transaction alert limit.",
+        "heading": "Find Alert Limit",
+        "text": [
+          "Most banks provide email transaction alerts for transactions over a certain limit (e.g. $200). Find out how to change the transaction alert limit."
+        ],
         "link": {
           "label": "Changing limit for DBS",
           "url": "https://www.dbs.com.sg/personal/support/bank-ibanking-notification-alerts.html"
         }
       },
       {
-        "text": "Change the transaction alert limit to $0. This ensures you receive an email for every transaction."
+        "heading": "Change Alert Limit",
+        "text": [
+          "Change the transaction alert limit to $0. This ensures you receive an email for every transaction."
+        ]
       },
       {
-        "text": "Ensure the email that receives alerts is the same email you use to sign in to our app."
-      }
-    ],
-    "notes": [
-      "Since the transaction limit is set to $0, you may receive a large volume of emails.",
-      "We recommend creating a rule to move transaction alert emails into a separate folder.",
-      "After setting up forwarding and filters, you may choose 'Archive Gmail’s copy' or 'Delete Gmail’s copy' (not recommended)."
-    ],
-    "images": [
-      {
-        "alt": "Archive or delete Gmail copy",
-        "src": "frontend/public/gmail_email_options.png"
+        "heading": "Confirm Email",
+        "text": [
+          "Ensure the email that receives alerts is the same email you use to sign in to our app."
+        ],
+        "notes": [
+          "Since the transaction limit is set to $0, you may receive a large volume of emails.",
+          "We recommend creating a rule to move transaction alert emails into a separate folder.",
+          "After setting up forwarding and filters, you may choose 'Archive Gmail’s copy' or 'Delete Gmail’s copy' (not recommended)."
+        ],
+        "image": {
+          "alt": "Archive or delete Gmail copy",
+          "src": "frontend/public/gmail_email_options.png"
+        }
       }
     ]
   },
 
   "autoForwarding": {
-    "heading": "Auto-forwarding in Gmail",
-    "sections": [
+    "heading": "Auto Forwarding in Gmail",
+    "steps": [
       {
-        "heading": "Get your Unique Forwarding Email Address",
-        "steps": [
-          "Sign into our app using the Sign in With Google button.",
-          "Go to Settings → Your unique forwarding address and copy the address."
+        "heading": "Get Forwarding Address",
+        "text": [
+          "Get your unique forwarding email address.",
+          "Sign into our app using the Sign in With Google button. Go to Settings → Your unique forwarding address and copy the address."
         ],
-        "images": ["(image)", "(image)"]
+        "image": {
+          "alt": "Copy your unique forwarding address from app settings.",
+          "src": "/get_started/get_forwarding_address.jpg"
+        }
       },
       {
         "heading": "Open Gmail Settings",
-        "steps": ["Open Gmail settings and click 'See all settings'."],
-        "images": [
-          {
-            "alt": "Google settings",
-            "src": "frontend/public/google_settings.png"
-          }
-        ]
+        "text": ["Open Gmail settings and click 'See all settings'."],
+        "image": {
+          "alt": "Open Gmail settings and click 'See all settings'.",
+          "src": "/get_started/open_gmail_settings.jpg"
+        }
       },
       {
-        "heading": "Add your forwarding email",
-        "steps": [
+        "heading": "Add Forwarding Email",
+        "text": [
           "Go to the 'Forwarding and POP/IMAP' tab.",
           "Click 'Add a forwarding address' and paste your unique forwarding email.",
           "Click Next → Proceed → OK."
         ],
         "notes": ["You will see a popup asking you to verify forwarding."],
-        "images": [
-          {
-            "alt": "Adding forwarding address",
-            "src": "frontend/public/forwarding_address.png"
-          }
-        ]
+        "image": {
+          "alt": "Adding forwarding address.",
+          "src": "/get_started/add_forwarding_email.jpg"
+        }
       },
       {
-        "heading": "Confirm forwarding",
-        "steps": [
+        "heading": "Confirm Forwarding",
+        "text": [
           "In our app, go to Settings and scroll to 'Your activation link'.",
           "Click the confirmation link to confirm the forwarding address."
         ],
-        "images": ["(image)"]
+        "image": {
+          "alt": "Click the confirmation link to confirm the forwarding address.",
+          "src": "/get_started/confirm_forwarding.jpg"
+        }
       },
       {
-        "heading": "Filter for only transaction-related emails",
-        "description": "Filters ensure that only transaction-related emails are forwarded.",
-        "steps": [
+        "heading": "Add Email Filter",
+        "text": [
+          "Filters ensure that only transaction-related emails are forwarded.",
           "Go to the 'Filters and Blocked Addresses' tab.",
           "Click 'Create a new filter'.",
           "Customize the filter using sender and subject/body wrapped in double quotes."
-        ],
-        "examples": [
-          {
-            "description": "DBS example",
-            "from": "\"ibanking.alert@dbs.com\"",
-            "contains": "\"transaction was completed\""
-          }
         ],
         "notes": [
           "Filter rules vary by bank. Check your transaction emails for correct content.",
           "DBS PayLah users must create a separate filter for 'paylah.alert@dbs.com'.",
           "If your bank has a wallet feature, remember to create a separate filter."
         ],
-        "images": [
-          {
-            "alt": "Filter example",
-            "src": "frontend/public/google_filter_address.png"
-          }
+        "image": {
+          "alt": "An example filter for dbs bank",
+          "src": "/get_started/add_email_filter.jpg"
+        },
+        "captions": [
+          "Here is an example filter for dbs bank. The email MUST be from 'ibanking.alert@dbs.com' and the body MUST contain 'transaction was completed'."
         ]
       },
       {
-        "heading": "Confirming filter",
-        "steps": [
+        "heading": "Confirm filter",
+        "text": [
           "Click 'Create Filter' and select 'Forward it to' your unique forwarding email.",
           "Click the blue 'Create Filter' button.",
           "Verify that the filter appears in the list."
         ],
-        "images": [
-          {
-            "alt": "Successful filter",
-            "src": "frontend/public/successful_filter.png"
-          }
-        ]
+        "image": {
+          "alt": "Verify that the filter appears in the list.",
+          "src": "/get_started/confirm_filter.jpg"
+        }
       }
     ]
   },
 
-  "testing": {
-    "heading": "Testing Filter (very very very important!)",
-    "description": "Expenses will not be tracked correctly if filters do not work as intended.",
-    "steps": [
-      "In Gmail settings, go to Filters and Blocked Addresses.",
-      "Edit the newly created filter and click 'Search'.",
-      "Verify that only intended transaction emails are shown.",
-      "Repeat this for all filters."
+  "testingFilter": {
+    "heading": "Testing Filter",
+    "text": [
+      "In case it was not clear, this step is kinda important. This is because your expenses will not be tracked correctly if the filter is not working as intended.",
+      "On the Filters and Blocked Addresses page in settings, click on the 'Edit' button for the newly created filter and then click 'Search' (blue button). You should see the emails you intend to forward. Make sure to do this for all filters! (Example for both ibanking and paylah alerts filter mentioned before)."
     ]
   },
 
-  "warnings": {
-    "heading": "DO NOT FORWARD ALL EMAILS",
-    "points": [
-      "Forwarding all emails can result in loss of privacy.",
-      "It can also overload our servers, causing dropped requests."
+  "warning": {
+    "heading": "Do Not Forward All Emails",
+    "text": [
+      "Forwarding all your emails will result in loss of privacy for you and server overload (and subsequently dropping your requests) for us.",
+      "To prevent this, select the 'Disable Forwarding' option."
     ],
-    "instruction": "Select the 'Disable forwarding' option to prevent forwarding all emails.",
     "image": {
-      "alt": "Disable forwarding",
-      "src": "frontend/public/disable_forwarding.png"
+      "alt": "Select the 'Disable Forwarding' option.",
+      "src": "/get_started/warning.jpg"
     }
   }
 }

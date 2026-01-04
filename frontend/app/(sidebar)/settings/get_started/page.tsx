@@ -1,5 +1,19 @@
-import { GetStarted } from '@/components/settings/GetStarted';
+import {
+  IntroCard,
+  EmailAlertsCard,
+  AutoForwardingCard,
+  TestingFilterCard,
+  WarningCard,
+} from '@/components/settings/GetStarted';
 
 export default function SettingsGetStartedPage() {
-  return <GetStarted />;
+  return (
+    <>
+      <IntroCard />
+      <EmailAlertsCard />
+      <AutoForwardingCard />
+      <TestingFilterCard />
+      <WarningCard />
+    </>
+  );
 }
