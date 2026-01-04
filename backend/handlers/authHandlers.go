@@ -31,7 +31,7 @@ func OauthHandler(ctx context.Context, c *app.RequestContext) {
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
 		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/auth/callback",
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
@@ -43,10 +43,11 @@ func OauthHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
+
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
 		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		RedirectURL:  "http://localhost:8080/auth/callback",
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
