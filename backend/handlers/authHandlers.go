@@ -117,7 +117,7 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 		jwtStr,                          // value
 		maxAge,                          // maxAge in seconds
 		"/",                             // path
-		"",                              // domain (empty = current domain)
+		"autoex-dev.vercel.app",         // domain (empty = current domain)
 		protocol.CookieSameSiteNoneMode, // sameSite lax
 		secure,                          // secure (true in prod with HTTPS)
 		true,                            // httpOnly
