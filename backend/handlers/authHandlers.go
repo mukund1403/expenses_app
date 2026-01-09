@@ -28,10 +28,15 @@ func RegisterHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func OauthHandler(ctx context.Context, c *app.RequestContext) {
+	redirectURL := os.Getenv("REDIRECT_URL_PROD")
+	env := os.Getenv("APP_ENV")
+	if env == "dev" {
+		redirectURL = os.Getenv("REDIRECT_URL_DEV")
+	}
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
 		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
@@ -43,11 +48,15 @@ func OauthHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
-
+	redirectURL := os.Getenv("REDIRECT_URL_PROD")
+	env := os.Getenv("APP_ENV")
+	if env == "dev" {
+		redirectURL = os.Getenv("REDIRECT_URL_DEV")
+	}
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
 		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
@@ -106,39 +115,13 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	env := os.Getenv("APP_ENV")
-	secure := true
-	if env == "dev" {
-		secure = false
-	}
-	maxAge := 24 * 60 * 60 // 1 day
-	c.SetCookie(
-		"token",                         // name
-		jwtStr,                          // value
-		maxAge,                          // maxAge in seconds
-		"/",                             // path
-		"autoex-dev.vercel.app",         // domain (empty = current domain)
-		protocol.CookieSameSiteNoneMode, // sameSite lax
-		secure,                          // secure (true in prod with HTTPS)
-		true,                            // httpOnly
-	)
-
-	// 8) Redirect back to frontend (optional: include a short-lived state or deep link)
-	frontend := os.Getenv("FRONTEND_URL")
-	if frontend == "" {
-		logx.Logger.Panic("no frontend url")
-		return
-	}
-	logx.Logger.Info(fmt.Sprintf("user:%s, %s logged in successfully", user.Name, user.Email))
-
-	if isUserNew {
-		c.Redirect(302, []byte(frontend+"/settings/get_started"))
-		return
-	}
-
-	c.Redirect(302, []byte(frontend+"/home"))
+	c.JSON(200, map[string]interface{}{
+		"token":       jwtStr,
+		"is_new_user": isUserNew,
+	})
 }
 
+// deprecate?? since frontend should handle
 func LogoutHandler(ctx context.Context, c *app.RequestContext) {
 	env := os.Getenv("APP_ENV")
 	secure := true
