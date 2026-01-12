@@ -59,22 +59,22 @@ export default function AuthPage() {
   if (error) {
     return (
       <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        height="80vh"
+        display='flex'
+        justifyContent='center'
+        alignItems='center'
+        height='80vh'
       >
-        <Alert severity="error">{error}</Alert>
+        <Alert severity='error'>{error}</Alert>
       </Box>
     );
   }
 
   return (
     <Box
-      display="flex"
-      justifyContent="center"
-      alignItems="center"
-      height="80vh"
+      display='flex'
+      justifyContent='center'
+      alignItems='center'
+      height='80vh'
     >
       <Card
         sx={{
@@ -87,13 +87,13 @@ export default function AuthPage() {
         }}
       >
         <CardContent>
-          <Typography variant="h5" gutterBottom>
+          <Typography variant='h5' gutterBottom>
             Welcome to AutoEx!
           </Typography>
-          <Typography variant="body1" gutterBottom>
+          <Typography variant='body1' gutterBottom>
             Signing you in. Please wait...
           </Typography>
-          <Box mt={2} display="flex" justifyContent="center">
+          <Box mt={2} display='flex' justifyContent='center'>
             <CircularProgress />
           </Box>
         </CardContent>

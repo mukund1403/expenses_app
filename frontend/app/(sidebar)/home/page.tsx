@@ -1,14 +1,15 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Alert from '@mui/material/Alert';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Grid } from '@mui/material';
 import Link from 'next/link';
+import {
+  AccountBalanceWalletRounded,
+  AutoGraphRounded,
+  ReceiptRounded,
+  SettingsApplicationsRounded,
+} from '@mui/icons-material';
+import React from 'react';
 
 type UserDetailsResponse = {
   name: string;
@@ -24,7 +25,7 @@ export default async function HomePage() {
   const jwt = cookieStore.get('token')?.value; // retrieve JWT from HttpOnly cookie
 
   if (!jwt) {
-    console.log("reached here")
+    console.log('reached here');
     redirect('/login'); // no JWT → redirect to login
   }
 
@@ -59,29 +60,30 @@ export default async function HomePage() {
     );
   }
 
+  // TODO: Move UI Logic into `/components`
   return (
-    <Box sx={{ p: 4 }}>
+    <>
       {/* Header */}
-      <Box mb={4}>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ m: '1rem' }}>
+        <Typography variant='h4' gutterBottom>
           Hi {userDetails.name}! Welcome to AutoEx 👋
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography variant='body1' color='text.secondary'>
           Your all-in-one platform to track spending, manage budgets, and gain
           insights into your finances.
         </Typography>
       </Box>
 
       {/* Main Navigation Cards */}
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6} lg={3}>
-          <Link href="/transactions" style={{ textDecoration: 'none' }}>
+      <Grid container spacing={1} sx={{ m: '0.5rem' }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Link href='/transactions' style={{ textDecoration: 'none' }}>
             <Card sx={{ height: '100%', cursor: 'pointer' }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant='h6' gutterBottom>
                   💳 Transactions
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   View and search through all your transactions in one place.
                 </Typography>
               </CardContent>
@@ -89,14 +91,14 @@ export default async function HomePage() {
           </Link>
         </Grid>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <Link href="/budgets" style={{ textDecoration: 'none' }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Link href='/budgets' style={{ textDecoration: 'none' }}>
             <Card sx={{ height: '100%', cursor: 'pointer' }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant='h6' gutterBottom>
                   📊 Budgets
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   Set spending limits and keep your finances on track.
                 </Typography>
               </CardContent>
@@ -104,14 +106,14 @@ export default async function HomePage() {
           </Link>
         </Grid>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <Link href="/analytics" style={{ textDecoration: 'none' }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Link href='/analytics' style={{ textDecoration: 'none' }}>
             <Card sx={{ height: '100%', cursor: 'pointer' }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant='h6' gutterBottom>
                   📈 Analytics
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   Get insights into your spending patterns and trends.
                 </Typography>
               </CardContent>
@@ -119,14 +121,14 @@ export default async function HomePage() {
           </Link>
         </Grid>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <Link href="/settings" style={{ textDecoration: 'none' }}>
+        <Grid size={{ xs: 12, md: 6 }}>
+          <Link href='/settings' style={{ textDecoration: 'none' }}>
             <Card sx={{ height: '100%', cursor: 'pointer' }}>
               <CardContent>
-                <Typography variant="h6" gutterBottom>
+                <Typography variant='h6' gutterBottom>
                   ⚙️ Settings
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant='body2' color='text.secondary'>
                   Manage your account, preferences, and integrations.
                 </Typography>
               </CardContent>
@@ -136,15 +138,15 @@ export default async function HomePage() {
       </Grid>
 
       {/* Optional next steps */}
-      <Box mt={5}>
-        <Typography variant="h6" gutterBottom>
+      <Box sx={{ m: '1rem' }}>
+        <Typography variant='h6' gutterBottom>
           🚀 Getting started
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          If you’re new here, start by reviewing your transactions or adding new ones to get the most out of AutoEx.
+        <Typography variant='body2' color='text.secondary'>
+          If you’re new here, start by reviewing your transactions or adding new
+          ones to get the most out of AutoEx.
         </Typography>
       </Box>
-    </Box>
+    </>
   );
-
 }

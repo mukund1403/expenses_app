@@ -10,7 +10,8 @@ export default function LoginPage() {
 
   // Map error query params to user-friendly messages
   const errorMessages: Record<string, string> = {
-    login_failed: 'There is an issue with our system right now. Please try again later.',
+    login_failed:
+      'There is an issue with our system right now. Please try again later.',
     oauth_failed:
       'There has been an issue signing in with Google. Please check your account or try again.',
   };
@@ -21,7 +22,7 @@ export default function LoginPage() {
 
   return (
     <Container
-      maxWidth="sm"
+      maxWidth='sm'
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -32,22 +33,23 @@ export default function LoginPage() {
       }}
     >
       <Box mb={4}>
-        <Typography variant="h3" gutterBottom>
+        <Typography variant='h3' gutterBottom>
           Welcome to AutoEx!
         </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
+        <Typography variant='subtitle1' color='textSecondary'>
           Sign in to get started
         </Typography>
       </Box>
 
       {errorParam && (
-        <Alert severity="error" sx={{ mb: 3, width: '100%' }}>
-          {errorMessages[errorParam] ?? 'An unknown error occurred. Please try again.'}
+        <Alert severity='error' sx={{ mb: 3, width: '100%' }}>
+          {errorMessages[errorParam] ??
+            'An unknown error occurred. Please try again.'}
         </Alert>
       )}
 
       <Button
-        variant="contained"
+        variant='contained'
         startIcon={<GoogleIcon />}
         sx={{
           backgroundColor: '#4285F4',
