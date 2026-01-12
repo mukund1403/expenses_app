@@ -20,6 +20,12 @@ type ActivationLinkResponse = {
 export default async function SettingsPage() {
   const cookieStore = await cookies();
 
+  const jwt = cookieStore.get('token')?.value; // retrieve JWT from HttpOnly cookie
+
+  if (!jwt) {
+    redirect('/login'); // no JWT → redirect to login
+  }
+
   /* -----------------------------
      1. Fetch user details (required)
   ------------------------------ */
@@ -28,21 +34,16 @@ export default async function SettingsPage() {
   const userRes = await fetch(
     `${process.env.NEXT_PUBLIC_GOLANG_URL}/settings/user_details`,
     {
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
       method: 'GET',
+      headers: {
+        Authorization: `Bearer ${jwt}`, // send JWT as Bearer token
+      },
       cache: 'no-store',
-      redirect: 'manual',
     },
   );
 
-  // Handle auth redirects
-  if (userRes.status >= 300 && userRes.status < 400) {
-    const redirectUrl = userRes.headers.get('Location');
-    if (redirectUrl) {
-      redirect(redirectUrl);
-    }
+  if (userRes.status === 401) {
+    redirect('/login'); // token invalid/expired → redirect
   }
 
   try {
