@@ -1,12 +1,16 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
 import { Button, Container, Typography, Box, Alert } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 
-export default function LoginPage() {
-  const searchParams = useSearchParams();
-  const errorParam = searchParams.get('error');
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams: {
+    error?: string;
+  };
+}) {
+  const errorParam = searchParams.error;
 
   // Map error query params to user-friendly messages
   const errorMessages: Record<string, string> = {
