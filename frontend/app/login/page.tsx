@@ -3,22 +3,8 @@
 import { Button, Container, Typography, Box, Alert } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 
-export default function LoginPage({
-  searchParams,
-}: {
-  searchParams: {
-    error?: string;
-  };
-}) {
-  const errorParam = searchParams.error;
-
-  // Map error query params to user-friendly messages
-  const errorMessages: Record<string, string> = {
-    login_failed:
-      'There is an issue with our system right now. Please try again later.',
-    oauth_failed:
-      'There has been an issue signing in with Google. Please check your account or try again.',
-  };
+export default function LoginPage() {
+  // TODO: Implement error query params
 
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.NEXT_PUBLIC_GOLANG_URL}/auth/oauth`;
@@ -44,13 +30,6 @@ export default function LoginPage({
           Sign in to get started
         </Typography>
       </Box>
-
-      {errorParam && (
-        <Alert severity='error' sx={{ mb: 3, width: '100%' }}>
-          {errorMessages[errorParam] ??
-            'An unknown error occurred. Please try again.'}
-        </Alert>
-      )}
 
       <Button
         variant='contained'
