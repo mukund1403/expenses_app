@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Card from '@mui/material/Card';
@@ -9,17 +9,24 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
-export default function AuthPage() {
-  const searchParams = useSearchParams();
+export default function AuthPage({
+  searchParams,
+}: {
+  searchParams: {
+    code?: string;
+    is_user_new?: string;
+  };
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const code = searchParams.get('code');
-    const isUserNew = searchParams.get('is_user_new') === 'true';
+  const code = searchParams.code;
+  const isUserNew = searchParams.is_user_new === 'true';
 
+  const derivedError = !code ? 'Missing authorization code.' : null;
+
+  useEffect(() => {
     if (!code) {
-      setError('Missing authorization code.');
       return;
     }
 
@@ -50,13 +57,20 @@ export default function AuthPage() {
         // Redirect user based on isUserNew flag
         router.push(isUserNew ? '/settings/get_started' : '/home');
       })
-      .catch((err: any) => {
+      .catch((err: unknown) => {
         console.error(err);
-        setError(err.message || 'Something went wrong.');
-      });
-  }, [searchParams, router]);
 
-  if (error) {
+        if (err instanceof Error) {
+          setError(err.message);
+        } else {
+          setError('Something went wrong.');
+        }
+      });
+  }, [searchParams, router, code, isUserNew]);
+
+  const displayError = derivedError ?? error;
+
+  if (displayError) {
     return (
       <Box
         display='flex'
