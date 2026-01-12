@@ -25,7 +25,6 @@ export default async function HomePage() {
   const jwt = cookieStore.get('token')?.value; // retrieve JWT from HttpOnly cookie
 
   if (!jwt) {
-    console.log('reached here');
     redirect('/login'); // no JWT → redirect to login
   }
 
