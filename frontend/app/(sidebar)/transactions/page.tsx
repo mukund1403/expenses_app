@@ -9,26 +9,29 @@ import { getCurrencySummaryList } from '@/components/transactions/utils';
 export default async function TransactionsPage() {
   const cookie = await cookies();
 
+  const jwt = cookie.get('token')?.value; // retrieve JWT from HttpOnly cookie
+
+  if (!jwt) {
+    console.log("reached here")
+    redirect('/login'); // no JWT → redirect to login
+  }
+
   let transactionList: Transaction[];
   let currencySummaryList: CurrencySummary[];
 
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`,
     {
-      headers: {
-        Cookie: cookie.toString(),
-      },
       method: 'GET',
+      headers: {
+        Authorization: `Bearer ${jwt}`, // send JWT as Bearer token
+      },
       cache: 'no-store',
-      redirect: 'manual',
     },
   );
 
-  if (res.status >= 300 && res.status < 400) {
-    const redirectUrl = res.headers.get('Location');
-    if (redirectUrl) {
-      redirect(redirectUrl);
-    }
+  if (res.status === 401) {
+    redirect('/login'); // token invalid/expired → redirect
   }
 
   try {

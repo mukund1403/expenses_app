@@ -49,7 +49,6 @@ func AuthMiddleware() app.HandlerFunc {
 
 		if claims, ok := token.Claims.(jwt.MapClaims); ok {
 			c.Set("user", claims)
-			logx.Logger.Debug("token valid")
 		} else {
 			logx.Logger.Error("token invalid")
 			c.JSON(401, map[string]string{"error": "invalid token claims"})

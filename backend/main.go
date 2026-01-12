@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app/server"
+	"github.com/dgraph-io/ristretto"
 	"github.com/hertz-contrib/cors"
 	"github.com/joho/godotenv"
 )
@@ -42,6 +43,18 @@ func main() {
 		MaxAge: 12 * time.Hour, // Maximum length of upload_file-side cache preflash requests (seconds)
 	}))
 
+	// cache for oneTimeCode : JWT
+	cache, err := ristretto.NewCache(&ristretto.Config{
+		NumCounters: 1e4,
+		MaxCost:     1 << 20, // 1MB
+		BufferItems: 64,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	handlers.InitOTPCache(cache)
+
 	RegisterGroupRoute(h)
 
 	h.Spin()
@@ -54,6 +67,7 @@ func RegisterGroupRoute(h *server.Hertz) {
 		auth.GET("/oauth", handlers.OauthHandler)
 		auth.GET("/callback", handlers.OauthCallbackHandler)
 		auth.POST("/logout", handlers.LogoutHandler)
+		auth.POST("/exchange", handlers.JWTHandler)
 	}
 
 	transactions := h.Group("/transactions")

@@ -22,11 +22,14 @@ require (
 	github.com/bytedance/gopkg v0.1.1 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
+	github.com/cespare/xxhash/v2 v2.1.1 // indirect
 	github.com/clipperhouse/stringish v0.1.1 // indirect
 	github.com/clipperhouse/uax29/v2 v2.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/gopkg v0.1.4 // indirect
 	github.com/cloudwego/netpoll v0.7.0 // indirect
+	github.com/dgraph-io/ristretto v0.2.0 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -34,6 +37,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.19 // indirect
 	github.com/nyaruka/phonenumbers v1.0.55 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect

@@ -1,6 +1,14 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import Alert from '@mui/material/Alert';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Grid,
+} from '@mui/material';
+import Link from 'next/link';
 
 type UserDetailsResponse = {
   name: string;
@@ -13,26 +21,28 @@ export default async function HomePage() {
   // TODO: Replace with `/home` with relevant features
   const cookieStore = await cookies();
 
+  const jwt = cookieStore.get('token')?.value; // retrieve JWT from HttpOnly cookie
+
+  if (!jwt) {
+    console.log("reached here")
+    redirect('/login'); // no JWT → redirect to login
+  }
+
   let userDetails: UserDetailsResponse;
 
   const userRes = await fetch(
     `${process.env.NEXT_PUBLIC_GOLANG_URL}/settings/user_details`,
     {
-      headers: {
-        Cookie: cookieStore.toString(),
-      },
       method: 'GET',
+      headers: {
+        Authorization: `Bearer ${jwt}`, // send JWT as Bearer token
+      },
       cache: 'no-store',
-      redirect: 'manual',
     },
   );
 
-  // Handle auth redirects
-  if (userRes.status >= 300 && userRes.status < 400) {
-    const redirectUrl = userRes.headers.get('Location');
-    if (redirectUrl) {
-      redirect(redirectUrl);
-    }
+  if (userRes.status === 401) {
+    redirect('/login'); // token invalid/expired → redirect
   }
 
   try {
@@ -50,11 +60,91 @@ export default async function HomePage() {
   }
 
   return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Login Successful 🎉</h1>
-      <p>Welcome, {userDetails.name}</p>
-      <p>Your session is now active via a secure HttpOnly cookie.</p>
-      <p>You can now navigate to protected pages.</p>
-    </div>
+    <Box sx={{ p: 4 }}>
+      {/* Header */}
+      <Box mb={4}>
+        <Typography variant="h4" gutterBottom>
+          Hi {userDetails.name}! Welcome to AutoEx 👋
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Your all-in-one platform to track spending, manage budgets, and gain
+          insights into your finances.
+        </Typography>
+      </Box>
+
+      {/* Main Navigation Cards */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6} lg={3}>
+          <Link href="/transactions" style={{ textDecoration: 'none' }}>
+            <Card sx={{ height: '100%', cursor: 'pointer' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  💳 Transactions
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  View and search through all your transactions in one place.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Link>
+        </Grid>
+
+        <Grid item xs={12} md={6} lg={3}>
+          <Link href="/budgets" style={{ textDecoration: 'none' }}>
+            <Card sx={{ height: '100%', cursor: 'pointer' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  📊 Budgets
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Set spending limits and keep your finances on track.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Link>
+        </Grid>
+
+        <Grid item xs={12} md={6} lg={3}>
+          <Link href="/analytics" style={{ textDecoration: 'none' }}>
+            <Card sx={{ height: '100%', cursor: 'pointer' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  📈 Analytics
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Get insights into your spending patterns and trends.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Link>
+        </Grid>
+
+        <Grid item xs={12} md={6} lg={3}>
+          <Link href="/settings" style={{ textDecoration: 'none' }}>
+            <Card sx={{ height: '100%', cursor: 'pointer' }}>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  ⚙️ Settings
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Manage your account, preferences, and integrations.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Link>
+        </Grid>
+      </Grid>
+
+      {/* Optional next steps */}
+      <Box mt={5}>
+        <Typography variant="h6" gutterBottom>
+          🚀 Getting started
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          If you’re new here, start by reviewing your transactions or adding new ones to get the most out of AutoEx.
+        </Typography>
+      </Box>
+    </Box>
   );
+
 }
