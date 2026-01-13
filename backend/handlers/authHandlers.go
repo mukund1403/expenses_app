@@ -43,13 +43,18 @@ func RegisterHandler(ctx context.Context, c *app.RequestContext) {
 
 func OauthHandler(ctx context.Context, c *app.RequestContext) {
 	redirectURL := os.Getenv("REDIRECT_URL_PROD")
+	clientId := os.Getenv("OAUTH_CLIENT_ID_PROD")
+	clientSecret := os.Getenv("OAUTH_CLIENT_SECRET_PROD")
 	env := os.Getenv("APP_ENV")
 	if env == "dev" {
 		redirectURL = os.Getenv("REDIRECT_URL_DEV")
+		clientId = os.Getenv("OAUTH_CLIENT_ID_DEV")
+		clientSecret = os.Getenv("OAUTH_CLIENT_SECRET_DEV")
 	}
+	fmt.Println("clientid: ", clientId)
 	conf := &oauth2.Config{
-		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
-		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
@@ -63,13 +68,17 @@ func OauthHandler(ctx context.Context, c *app.RequestContext) {
 
 func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	redirectURL := os.Getenv("REDIRECT_URL_PROD")
+	clientId := os.Getenv("OAUTH_CLIENT_ID_PROD")
+	clientSecret := os.Getenv("OAUTH_CLIENT_SECRET_PROD")
 	env := os.Getenv("APP_ENV")
 	if env == "dev" {
 		redirectURL = os.Getenv("REDIRECT_URL_DEV")
+		clientId = os.Getenv("OAUTH_CLIENT_ID_DEV")
+		clientSecret = os.Getenv("OAUTH_CLIENT_SECRET_DEV")
 	}
 	conf := &oauth2.Config{
-		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
-		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
 		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
