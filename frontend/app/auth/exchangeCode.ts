@@ -1,6 +1,6 @@
 'use client';
 
-const exchangeCode = async (code: string): Promise<void> => {
+const exchangeCode = async (code: string): Promise<{ isUserNew: boolean }> => {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_GOLANG_URL}/auth/exchange`,
     {
@@ -27,6 +27,8 @@ const exchangeCode = async (code: string): Promise<void> => {
   if (!cookieRes.ok) {
     throw new Error('Failed to Set Authentication Cookie.');
   }
+
+  return { isUserNew: data.is_user_new === true }; // If field is empty return false
 };
 
 export default exchangeCode;
