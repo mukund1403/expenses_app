@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"expenses/db"
@@ -13,12 +15,24 @@ import (
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/protocol"
+	"github.com/dgraph-io/ristretto"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
+
+type OneTimeJWT struct {
+	JWTString string `json:"jwt"`
+	IsUserNew bool   `json:"is_user_new"`
+}
+
+var otpCache *ristretto.Cache
+
+func InitOTPCache(c *ristretto.Cache) {
+	otpCache = c
+}
 
 func RegisterHandler(ctx context.Context, c *app.RequestContext) {
 	c.JSON(200, map[string]string{
@@ -28,8 +42,6 @@ func RegisterHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func OauthHandler(ctx context.Context, c *app.RequestContext) {
-<<<<<<< Updated upstream
-=======
 	redirectURL := os.Getenv("REDIRECT_URL_PROD")
 	clientId := os.Getenv("OAUTH_CLIENT_ID_PROD")
 	clientSecret := os.Getenv("OAUTH_CLIENT_SECRET_PROD")
@@ -39,11 +51,11 @@ func OauthHandler(ctx context.Context, c *app.RequestContext) {
 		clientId = os.Getenv("OAUTH_CLIENT_ID_DEV")
 		clientSecret = os.Getenv("OAUTH_CLIENT_SECRET_DEV")
 	}
->>>>>>> Stashed changes
+
 	conf := &oauth2.Config{
-		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
-		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
@@ -55,20 +67,28 @@ func OauthHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
-
+	redirectURL := os.Getenv("REDIRECT_URL_PROD")
+	clientId := os.Getenv("OAUTH_CLIENT_ID_PROD")
+	clientSecret := os.Getenv("OAUTH_CLIENT_SECRET_PROD")
+	env := os.Getenv("APP_ENV")
+	if env == "dev" {
+		redirectURL = os.Getenv("REDIRECT_URL_DEV")
+		clientId = os.Getenv("OAUTH_CLIENT_ID_DEV")
+		clientSecret = os.Getenv("OAUTH_CLIENT_SECRET_DEV")
+	}
 	conf := &oauth2.Config{
-		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
-		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		ClientID:     clientId,
+		ClientSecret: clientSecret,
+		RedirectURL:  redirectURL,
 		Scopes:       []string{"openid", "email", "profile"},
 		Endpoint:     google.Endpoint,
 	}
+
+	frontendURL := os.Getenv("FRONTEND_URL")
 	code := c.Query("code")
 	if code == "" {
 		logx.Logger.Error("missing Oauth code")
-		c.JSON(400, map[string]string{
-			"error": "missing oauth code",
-		})
+		c.Redirect(302, []byte(frontendURL+"/login?error=oauth_failed"))
 		return
 	}
 
@@ -77,7 +97,7 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	tok, err := conf.Exchange(ctx, code)
 	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(500, map[string]string{"error": "token exchange failed"})
+		c.Redirect(302, []byte(frontendURL+"/login?error=oauth_failed"))
 		return
 	}
 
@@ -85,12 +105,12 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	userInfo, err := fetchGoogleUserInfo(client)
 	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(500, map[string]string{"error": "failed to fetch user info"})
+		c.Redirect(302, []byte(frontendURL+"/login?error=oauth_failed"))
 		return
 	}
 	email, ok := userInfo["email"]
 	if !ok {
-		c.JSON(400, map[string]string{"error": "google oauth did not return email"})
+		c.Redirect(302, []byte(frontendURL+"/login?error=oauth_failed"))
 		return
 	}
 	info := map[string]interface{}{
@@ -103,8 +123,8 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 		logx.Logger.Info("user does not exist. Creating...")
 		user, err = db.CreateSupabaseUser(ctx, userInfo)
 		if err != nil {
-			logx.Logger.Error(err.Error())
-			c.JSON(500, map[string]string{"error": "unable to add user to supabase"})
+			logx.Logger.Error(fmt.Sprintf("error: unable to add user to supabase: %s", err.Error()))
+			c.Redirect(302, []byte(frontendURL+"/login?error=oauth_failed"))
 		}
 		isUserNew = true
 	} else {
@@ -113,46 +133,28 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 
 	jwtStr, err := createAppJWT(user)
 	if err != nil {
+		logx.Logger.Error(fmt.Sprintf("error: unable to create JWT: %s", err.Error()))
+		c.Redirect(302, []byte(frontendURL+"/login?error=login_failed"))
+		return
+	}
+
+	oneTimeCode, err := generateOTP()
+	if err != nil {
 		logx.Logger.Error(err.Error())
-		c.JSON(500, map[string]string{"error": "unable to log user in. try again later."})
-		return
+		c.Redirect(302, []byte(frontendURL+"/login?error=login_failed"))
 	}
 
-	env := os.Getenv("APP_ENV")
-	secure := true
-	if env == "dev" {
-		secure = false
-	}
-	maxAge := 24 * 60 * 60 // 1 day
-	c.SetCookie(
-		"token",                         // name
-		jwtStr,                          // value
-		maxAge,                          // maxAge in seconds
-		"/",                             // path
-		"autoex-dev.vercel.app",         // domain (empty = current domain)
-		protocol.CookieSameSiteNoneMode, // sameSite lax
-		secure,                          // secure (true in prod with HTTPS)
-		true,                            // httpOnly
-	)
-
-	// 8) Redirect back to frontend (optional: include a short-lived state or deep link)
-	frontend := os.Getenv("FRONTEND_URL")
-	if frontend == "" {
-		logx.Logger.Panic("no frontend url")
-		return
-	}
-	logx.Logger.Info(fmt.Sprintf("user:%s, %s logged in successfully", user.Name, user.Email))
-
-	if isUserNew {
-		c.Redirect(302, []byte(frontend+"/settings/get_started"))
-		return
+	oneTimeJWT := OneTimeJWT{
+		JWTString: jwtStr,
+		IsUserNew: isUserNew,
 	}
 
-	c.Redirect(302, []byte(frontend+"/home"))
+	otpCache.SetWithTTL(oneTimeCode, oneTimeJWT, 1, time.Minute)
+
+	successRedirectURL := fmt.Sprintf("%s/auth?code=%s", frontendURL, oneTimeCode)
+	c.Redirect(302, []byte(successRedirectURL))
 }
 
-<<<<<<< Updated upstream
-=======
 func JWTHandler(ctx context.Context, c *app.RequestContext) {
 	var body map[string]string
 	if err := c.BindJSON(&body); err != nil {
@@ -176,13 +178,13 @@ func JWTHandler(ctx context.Context, c *app.RequestContext) {
 	}
 
 	otpCache.Del(oneTimeCode)
+
 	logx.Logger.Info("jwt token sent to frontend")
 	c.JSON(200, oneTimeJWT)
 
 }
 
 // deprecate?? since frontend should handle
->>>>>>> Stashed changes
 func LogoutHandler(ctx context.Context, c *app.RequestContext) {
 	env := os.Getenv("APP_ENV")
 	secure := true
@@ -242,4 +244,13 @@ func createAppJWT(user *db.SupabaseUser) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(secret))
+}
+
+func generateOTP() (string, error) {
+	b := make([]byte, 24)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
