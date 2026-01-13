@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -76,7 +77,7 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 
 		{
 			name:  "DBS ambiguous merchant",
-			input: `DBS Alert: A transaction of SGD 88.50 occurred on your card ending 7789 on 12 Sep 2025 12:34.`,
+			input: `DBS Alert: A transaction of SGD 88.50 occurred on your card ending 7789 on 12 Jan 12:34.`,
 			check: func(t *testing.T, tx models.Transaction) {
 				if tx.Type != "expense" {
 					t.Errorf("expected expense, got %s", tx.Type)
@@ -86,6 +87,10 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 				}
 				if tx.Amount != 88.50 {
 					t.Errorf("wrong amount: %v", tx.Amount)
+				}
+				expectedTime, _ := time.Parse(time.RFC3339, "2026-01-12T12:34:00Z")
+				if !tx.DateTime.Equal(expectedTime) {
+					t.Errorf("wrong datetime: expected %s, got %s", expectedTime, tx.DateTime)
 				}
 			},
 		},

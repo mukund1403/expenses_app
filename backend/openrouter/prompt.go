@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 const OpenRouterURL = "https://openrouter.ai/api/v1/chat/completions"
@@ -69,7 +72,14 @@ func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 
 func buildPrompt(input string) string {
 	// Insert the master prompt here as a raw string literal
-	return promptTemplate
+	referenceYear := time.Now().UTC().Year()
+
+	prompt := strings.ReplaceAll(
+		promptTemplate,
+		"{{REFERENCE_YEAR}}",
+		strconv.Itoa(referenceYear),
+	)
+	return prompt
 }
 
 var promptTemplate = `
@@ -87,6 +97,11 @@ Required JSON structure:
   "category": "",
   "type": ""
 }
+
+Context:
+- If a transaction date does NOT include a year, assume the year is {{REFERENCE_YEAR}}.
+- {{REFERENCE_YEAR}} is derived from the email received timestamp.
+- Do NOT infer a different year unless the text explicitly states one.
 
 Rules:
 - Input is always plaintext.
@@ -168,7 +183,7 @@ Output:
   "account": "",
   "amount": 200,
   "currency": "SGD",
-  "datetime": "2025-01-09T21:45:00Z",
+  "datetime": "2026-01-09T21:45:00Z",
   "category": "transfers",
   "type": "expense"
 }

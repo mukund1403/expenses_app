@@ -156,7 +156,6 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func JWTHandler(ctx context.Context, c *app.RequestContext) {
-	logx.Logger.Info("reached jwt handler")
 	var body map[string]string
 	if err := c.BindJSON(&body); err != nil {
 		logx.Logger.Error(fmt.Sprintf("invalid request body: %s", err.Error()))
@@ -180,7 +179,6 @@ func JWTHandler(ctx context.Context, c *app.RequestContext) {
 
 	otpCache.Del(oneTimeCode)
 
-	logx.Logger.Info("jwt token sent to frontend")
 	c.JSON(200, oneTimeJWT)
 
 }
