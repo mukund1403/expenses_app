@@ -1,4 +1,4 @@
-'use server';
+'use client';
 
 const exchangeCode = async (code: string): Promise<void> => {
   const res = await fetch(
