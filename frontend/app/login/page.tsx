@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Container, Typography, Box, Alert } from '@mui/material';
+import { Button, Container, Typography, Box } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
 
 export default function LoginPage() {
