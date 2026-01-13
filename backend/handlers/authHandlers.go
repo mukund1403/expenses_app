@@ -28,6 +28,18 @@ func RegisterHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func OauthHandler(ctx context.Context, c *app.RequestContext) {
+<<<<<<< Updated upstream
+=======
+	redirectURL := os.Getenv("REDIRECT_URL_PROD")
+	clientId := os.Getenv("OAUTH_CLIENT_ID_PROD")
+	clientSecret := os.Getenv("OAUTH_CLIENT_SECRET_PROD")
+	env := os.Getenv("APP_ENV")
+	if env == "dev" {
+		redirectURL = os.Getenv("REDIRECT_URL_DEV")
+		clientId = os.Getenv("OAUTH_CLIENT_ID_DEV")
+		clientSecret = os.Getenv("OAUTH_CLIENT_SECRET_DEV")
+	}
+>>>>>>> Stashed changes
 	conf := &oauth2.Config{
 		ClientID:     os.Getenv("OAUTH_CLIENT_ID"),
 		ClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
@@ -139,6 +151,38 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 	c.Redirect(302, []byte(frontend+"/home"))
 }
 
+<<<<<<< Updated upstream
+=======
+func JWTHandler(ctx context.Context, c *app.RequestContext) {
+	var body map[string]string
+	if err := c.BindJSON(&body); err != nil {
+		logx.Logger.Error(fmt.Sprintf("invalid request body: %s", err.Error()))
+		c.JSON(400, map[string]string{"error": "invalid request body"})
+		return
+	}
+
+	oneTimeCode, ok := body["code"]
+	if !ok || oneTimeCode == "" {
+		logx.Logger.Error("missing code")
+		c.JSON(400, map[string]string{"error": "missing code"})
+		return
+	}
+
+	oneTimeJWT, ok := otpCache.Get(oneTimeCode)
+	if !ok {
+		logx.Logger.Error("cannot find jwt")
+		c.JSON(400, map[string]string{"error": "code expired need to relogin"})
+		return
+	}
+
+	otpCache.Del(oneTimeCode)
+	logx.Logger.Info("jwt token sent to frontend")
+	c.JSON(200, oneTimeJWT)
+
+}
+
+// deprecate?? since frontend should handle
+>>>>>>> Stashed changes
 func LogoutHandler(ctx context.Context, c *app.RequestContext) {
 	env := os.Getenv("APP_ENV")
 	secure := true
