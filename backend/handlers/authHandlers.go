@@ -156,6 +156,7 @@ func OauthCallbackHandler(ctx context.Context, c *app.RequestContext) {
 }
 
 func JWTHandler(ctx context.Context, c *app.RequestContext) {
+	logx.Logger.Info("reached jwt handler")
 	var body map[string]string
 	if err := c.BindJSON(&body); err != nil {
 		logx.Logger.Error(fmt.Sprintf("invalid request body: %s", err.Error()))
