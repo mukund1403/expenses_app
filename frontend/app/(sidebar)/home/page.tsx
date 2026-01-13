@@ -72,6 +72,17 @@ export default async function HomePage() {
           insights into your finances.
         </Typography>
       </Box>
+      
+      {/* Optional next steps */}
+      <Box sx={{ m: '1rem' }}>
+        <Typography variant='h6' gutterBottom>
+          🚀 Getting started
+        </Typography>
+        <Typography variant='body2' color='text.secondary'>
+          If you’re new here, go to Settings and scroll to Activation link to setup your auto forwarding.
+        </Typography>
+      </Box>
+
 
       {/* Main Navigation Cards */}
       <Grid container spacing={1} sx={{ m: '0.5rem' }}>
@@ -135,17 +146,6 @@ export default async function HomePage() {
           </Link>
         </Grid>
       </Grid>
-
-      {/* Optional next steps */}
-      <Box sx={{ m: '1rem' }}>
-        <Typography variant='h6' gutterBottom>
-          🚀 Getting started
-        </Typography>
-        <Typography variant='body2' color='text.secondary'>
-          If you’re new here, start by reviewing your transactions or adding new
-          ones to get the most out of AutoEx.
-        </Typography>
-      </Box>
     </>
   );
 }
