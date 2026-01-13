@@ -8,13 +8,10 @@ export default async function AuthPage({
 }) {
   const params = await searchParams;
   const code = Array.isArray(params.code) ? params.code[0] : params.code;
-  const isUserNew = Array.isArray(params.is_user_new)
-    ? params.is_user_new[0] === 'true'
-    : params.is_user_new === 'true' || false;
 
   if (!code) {
     return <Alert severity='error'>Missing Authorization Code.</Alert>;
   }
 
-  return <AuthCard code={code} isUserNew={isUserNew} />;
+  return <AuthCard code={code} />;
 }

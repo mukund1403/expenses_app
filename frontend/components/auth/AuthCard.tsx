@@ -10,13 +10,7 @@ import { useRouter } from 'next/navigation';
 import exchangeCode from '@/app/auth/exchangeCode';
 import Alert from '@mui/material/Alert';
 
-export default function AuthCard({
-  code,
-  isUserNew,
-}: {
-  code: string;
-  isUserNew: boolean;
-}) {
+export default function AuthCard({ code }: { code: string }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +18,7 @@ export default function AuthCard({
     if (!code) return;
 
     exchangeCode(code)
-      .then(() => {
+      .then(({ isUserNew }: { isUserNew: boolean }) => {
         router.push(isUserNew ? '/settings/get_started' : 'home');
       })
       .catch((err: unknown) => {
@@ -35,7 +29,7 @@ export default function AuthCard({
           setError('Failed to Exchange Code.');
         }
       });
-  }, [code, isUserNew, router]);
+  }, [code, router]);
 
   if (error) {
     return <Alert severity='error'>{error}</Alert>;
