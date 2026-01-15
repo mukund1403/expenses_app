@@ -6,12 +6,13 @@ import {
   HomeRounded,
   ReceiptRounded,
   SettingsApplicationsRounded,
+  LogoutRounded,
 } from '@mui/icons-material';
 
 export interface NavItem {
   label: string;
   href: string;
-  icon: ElementType<SvgIconProps>;
+  icon: ElementType<SvgIconProps>; 
 }
 
 export const navItems: readonly NavItem[] = [
