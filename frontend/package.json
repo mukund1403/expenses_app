@@ -7,8 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "format:check": "prettier --check .",
-    "format:write": "prettier --write ."
+    "format": "prettier --check ."
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
