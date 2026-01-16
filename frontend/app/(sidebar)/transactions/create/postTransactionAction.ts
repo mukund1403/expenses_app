@@ -14,7 +14,7 @@ const postTransactionAction = async (
     if (!jwt) {
       reject(new Error('Failed to Create Transaction.'));
     }
-    
+
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`,

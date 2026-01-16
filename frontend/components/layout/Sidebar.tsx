@@ -1,14 +1,16 @@
 'use client';
 
-import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Box,
+} from '@mui/material';
+import { LogoutRounded } from '@mui/icons-material';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import LogoutRounded from '@mui/icons-material/LogoutRounded';
-import { Box } from '@mui/material';
 import { navItems, NavItem } from '@/components/layout/consts';
 import { JSX } from 'react';
 
@@ -34,8 +36,7 @@ export default function Sidebar(): JSX.Element {
       {/* NAV ITEMS */}
       <List>
         {navItems.map(({ label, href, icon: Icon }: NavItem) => {
-          const isActive =
-            pathname === href || pathname.startsWith(`${href}/`);
+          const isActive = pathname === href || pathname.startsWith(`${href}/`);
 
           return (
             <ListItem key={href} disablePadding>
@@ -52,7 +53,7 @@ export default function Sidebar(): JSX.Element {
               >
                 <ListItemIcon sx={{ justifyContent: 'center' }}>
                   <Icon
-                    fontSize="small"
+                    fontSize='small'
                     sx={{ color: isActive ? 'primary.main' : 'text.secondary' }}
                   />
                 </ListItemIcon>
@@ -86,10 +87,13 @@ export default function Sidebar(): JSX.Element {
             }}
           >
             <ListItemIcon sx={{ justifyContent: 'center' }}>
-              <LogoutRounded fontSize="small" />
+              <LogoutRounded
+                fontSize='small'
+                sx={{ color: 'text.secondary' }}
+              />
             </ListItemIcon>
             <ListItemText
-              primary="Logout"
+              primary='Logout'
               slotProps={{
                 primary: {
                   fontSize: '0.75rem',
