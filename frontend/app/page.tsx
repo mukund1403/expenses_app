@@ -17,7 +17,6 @@ export default function LandingPage() {
 
     const tick = () => {
       const currentWord = words[wordIndex];
-      el.textContent = currentWord.slice(0, charIndex);
 
       if (!isDeleting && charIndex < currentWord.length) {
         charIndex++;
@@ -29,6 +28,8 @@ export default function LandingPage() {
           wordIndex = (wordIndex + 1) % words.length;
         }
       }
+
+      el.textContent = currentWord.slice(0, charIndex);
 
       const delay =
         !isDeleting && charIndex === currentWord.length
