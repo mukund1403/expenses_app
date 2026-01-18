@@ -6,6 +6,7 @@ import UserDetailsCard from '@/components/settings/UserDetailsCard';
 import ForwardingEmailCard from '@/components/settings/ForwardingEmailCard';
 import ActivationLinkCard from '@/components/settings/ActivationLinkCard';
 import EmptyActivationState from '@/components/settings/EmptyActivationState';
+import GettingStartedCard from '@/components/settings/GettingStartedCard';
 
 type UserDetailsResponse = {
   name: string;
@@ -102,6 +103,8 @@ export default async function SettingsPage() {
       />
 
       <ForwardingEmailCard forwardingEmail={userDetails.forwarding_email} />
+
+      <GettingStartedCard />
 
       {activationLink ? (
         <ActivationLinkCard activationLink={activationLink} />
