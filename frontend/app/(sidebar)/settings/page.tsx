@@ -70,10 +70,10 @@ export default async function SettingsPage() {
     const activationRes = await fetch(
       `${process.env.NEXT_PUBLIC_GOLANG_URL}/settings/activation_link`,
       {
-        method: 'GET',
         headers: {
-          Authorization: `Bearer ${jwt}`, // send JWT as Bearer token
+          Cookie: cookieStore.toString(),
         },
+        method: 'GET',
         cache: 'no-store',
       },
     );
