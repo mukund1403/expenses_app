@@ -3,12 +3,6 @@ import { redirect } from 'next/navigation';
 import Alert from '@mui/material/Alert';
 import { Box, Card, CardContent, Typography, Grid } from '@mui/material';
 import Link from 'next/link';
-import {
-  AccountBalanceWalletRounded,
-  AutoGraphRounded,
-  ReceiptRounded,
-  SettingsApplicationsRounded,
-} from '@mui/icons-material';
 import React from 'react';
 
 type UserDetailsResponse = {
@@ -72,17 +66,17 @@ export default async function HomePage() {
           insights into your finances.
         </Typography>
       </Box>
-      
+
       {/* Optional next steps */}
       <Box sx={{ m: '1rem' }}>
         <Typography variant='h6' gutterBottom>
           🚀 Getting started
         </Typography>
         <Typography variant='body2' color='text.secondary'>
-          If you’re new here, go to Settings and scroll to Activation link to setup your auto forwarding.
+          If you’re new here, go to Settings and scroll to Activation link to
+          setup your auto forwarding.
         </Typography>
       </Box>
-
 
       {/* Main Navigation Cards */}
       <Grid container spacing={1} sx={{ m: '0.5rem' }}>

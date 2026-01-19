@@ -1,4 +1,8 @@
-import { Card, CardContent, Typography, Stack } from '@mui/material';
+'use client';
+
+import { Card, CardContent, Typography, Stack, Button } from '@mui/material';
+import { LogoutRounded } from '@mui/icons-material';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   name: string;
@@ -6,6 +10,13 @@ type Props = {
 };
 
 export default function UserDetailsCard({ name, registeredEmail }: Props) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await fetch('/api/logout', { method: 'POST' });
+    router.replace('/login');
+  };
+
   return (
     <Card
       sx={{
@@ -32,6 +43,16 @@ export default function UserDetailsCard({ name, registeredEmail }: Props) {
           </Typography>
           <Typography variant='body1'>{registeredEmail}</Typography>
         </Stack>
+
+        <Button
+          sx={{ mt: 2 }}
+          variant='outlined'
+          color='error'
+          startIcon={<LogoutRounded />}
+          onClick={handleLogout}
+        >
+          Logout
+        </Button>
       </CardContent>
     </Card>
   );
