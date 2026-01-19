@@ -3,12 +3,6 @@ import { redirect } from 'next/navigation';
 import Alert from '@mui/material/Alert';
 import { Box, Card, CardContent, Typography, Grid } from '@mui/material';
 import Link from 'next/link';
-import {
-  AccountBalanceWalletRounded,
-  AutoGraphRounded,
-  ReceiptRounded,
-  SettingsApplicationsRounded,
-} from '@mui/icons-material';
 import React from 'react';
 
 type UserDetailsResponse = {
