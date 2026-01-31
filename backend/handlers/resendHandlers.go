@@ -91,6 +91,12 @@ func PostWebhookHandler(ctx context.Context, c *app.RequestContext) {
 	transaction, err := parseEmailBody(*emailBody)
 	if err != nil {
 		logx.Logger.Error(err.Error())
+		failedEmailBody, err := db.PostFailEmail(*emailBody, supabaseUser.ID)
+		if err != nil {
+			logx.Logger.Sugar().Errorf("error: %s", err.Error())
+			return
+		}
+		logx.Logger.Info(failedEmailBody.Id)
 		return
 	}
 	transaction.UserId = supabaseUser.ID
@@ -146,4 +152,32 @@ func getActivationLink(emailBody resend.ReceivedEmail) (string, error) {
 		return "", fmt.Errorf("activation link not found")
 	}
 	return match, nil
+}
+
+func ClearEmailQueue() error {
+	failedEmailList, err := db.GetFailEmailList()
+	if err != nil {
+		return err
+	}
+
+	for _, email := range failedEmailList {
+		transaction, err := parseEmailBody(email.ReceivedEmail)
+		if err != nil {
+			return err
+		}
+
+		transaction.UserId = email.UserID
+		_, err = db.PostTransaction(*transaction)
+		if err != nil {
+			return err
+		}
+		_, err = db.DeleteFailEmail(email.Id)
+		if err != nil {
+			return err
+		}
+
+		logx.Logger.Info("backlog transaction sucessfully added")
+	}
+
+	return nil
 }
