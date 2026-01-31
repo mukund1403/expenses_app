@@ -5,7 +5,15 @@ import Link from 'next/link';
 
 export default function GettingStartedCard() {
   return (
-    <Card sx={{ mb: 2 }}>
+    <Card
+      sx={{
+        borderRadius: '0.5rem',
+        backgroundColor: 'background.paper',
+        margin: '0.5rem',
+        overflow: 'hidden',
+        boxShadow: 3,
+      }}
+    >
       <CardContent>
         <Typography variant='h6' gutterBottom>
           Getting Started

@@ -1,0 +1,29 @@
+name: Sync main to fork
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout upstream repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Push to fork
+        run: |
+          git config --global user.name "Cohii"
+          git config --global user.email "hengjunxiangg@gmail.com"
+          git config --global url.https://github.com/.insteadOf git://github.com/
+          
+          git remote add fork https://x-access-token:${{ secrets.SYNC_FORK_TOKEN }}@github.com/Cohii2/expenses_app.git
+          
+          git push fork main --force
