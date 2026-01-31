@@ -57,6 +57,13 @@ func main() {
 
 	RegisterGroupRoute(h)
 
+	go func() {
+		err := handlers.ClearEmailQueue()
+		if err != nil {
+			logx.Logger.Sugar().Errorf("failed to clear backlog queue: %s", err.Error())
+		}
+	}()
+
 	h.Spin()
 }
 

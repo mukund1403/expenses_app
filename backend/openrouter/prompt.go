@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"strconv"
@@ -40,7 +41,7 @@ func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 	prompt := buildPrompt(plaintext)
 
 	reqBody := ORRequest{
-		Model: "mistralai/devstral-2512:free",
+		Model: "nvidia/nemotron-3-nano-30b-a3b:free",
 		Messages: []ORMessage{
 			{Role: "system", Content: prompt},
 			{Role: "user", Content: plaintext},
@@ -58,12 +59,20 @@ func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 	}
 	defer resp.Body.Close()
 
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf(
+			"openrouter error %d: %s",
+			resp.StatusCode,
+			string(body),
+		)
+	}
 	var data OROutput
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", err
+	if err := json.Unmarshal(body, &data); err != nil {
+		return "", fmt.Errorf("error decoding json: %s", err.Error())
 	}
 
-	if len(data.Choices) == 0 {
+	if len(data.Choices) == 0 && resp.StatusCode > 400 {
 		return "", fmt.Errorf("no response from model")
 	}
 

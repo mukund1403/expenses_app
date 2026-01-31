@@ -135,8 +135,6 @@ func DeleteTransaction(transaction models.Transaction) (*models.Transaction, err
 
 	deleteURL := fmt.Sprintf("%s/rest/v1/transactions?transaction_id=eq.%s", supabaseURL, transaction.TransactionId)
 
-	// payloadBytes, _ := json.Marshal(transaction)
-
 	req2, _ := http.NewRequestWithContext(context.Background(), "DELETE", deleteURL, nil)
 	req2.Header.Set("apikey", supabaseKey)
 	req2.Header.Set("Authorization", "Bearer "+supabaseKey)
