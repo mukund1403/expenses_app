@@ -79,12 +79,12 @@ func cleanupPostTransactionTest(t *testing.T, tx models.Transaction) {
 	}
 }
 
-func parseTime(t *testing.T, s string) time.Time {
+func parseTime(t *testing.T, s string) *time.Time {
 	t.Helper()
 
 	tm, err := time.Parse(time.RFC3339, s)
 	if err != nil {
 		t.Fatalf("invalid time %q: %v", s, err)
 	}
-	return tm
+	return &tm
 }

@@ -53,6 +53,5 @@ func InitLogger() *zap.Logger {
 
 	log.Info("hello info")
 	log.Debug("hello debug")
-	log.Error("hello error")
 	return log
 }
