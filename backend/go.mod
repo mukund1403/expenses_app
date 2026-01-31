@@ -4,6 +4,7 @@ go 1.24.5
 
 require (
 	github.com/cloudwego/hertz v0.10.3
+	github.com/dgraph-io/ristretto v0.2.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/hertz-contrib/cors v0.1.0
 	github.com/jaytaylor/html2text v0.0.0-20230321000545-74c2419ad056
@@ -28,7 +29,6 @@ require (
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/cloudwego/gopkg v0.1.4 // indirect
 	github.com/cloudwego/netpoll v0.7.0 // indirect
-	github.com/dgraph-io/ristretto v0.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect

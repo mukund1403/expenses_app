@@ -174,14 +174,14 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 		{
 			name: "Noisy multiline transfer email",
 			input: `
-Transaction Ref: TRX991827361
+		Transaction Ref: TRX991827361
 
-Date & Time: 11 Dec 2025 21:45
-Amount: SGD 1.00
+		Date & Time: 11 Dec 2025 21:45
+		Amount: SGD 1.00
 
-From: PayLah! Wallet (Mobile ending 5971)
-To: John Tan (Mobile ending 8085)
-`,
+		From: PayLah! Wallet (Mobile ending 5971)
+		To: John Tan (Mobile ending 8085)
+		`,
 			check: func(t *testing.T, tx models.Transaction) {
 				if tx.Type != "expense" {
 					t.Errorf("expected expense, got %s", tx.Type)
