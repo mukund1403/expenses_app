@@ -91,6 +91,15 @@ func PostWebhookHandler(ctx context.Context, c *app.RequestContext) {
 	transaction, err := parseEmailBody(*emailBody)
 	if err != nil {
 		logx.Logger.Error(err.Error())
+		if err.Error() == "email is not a transaction" {
+			logx.Logger.Info("USER IS PROBABLY AUTO FORWARDING ALL EMAILS")
+			err := handleNonTransactionEmail(emailBody.Text, *supabaseUser)
+			if err != nil {
+				logx.Logger.Sugar().Errorf("error sending out email to user: %s", err.Error())
+			}
+			return
+		}
+
 		failedEmailBody, err := db.PostFailEmail(*emailBody, supabaseUser.ID)
 		if err != nil {
 			logx.Logger.Sugar().Errorf("error: %s", err.Error())
@@ -134,11 +143,17 @@ func parseEmailBody(email resend.ReceivedEmail) (*models.Transaction, error) {
 		logx.Logger.Debug("error in prompt")
 		return nil, err
 	}
-	var tx models.Transaction
-	if err := json.Unmarshal([]byte(jsonStr), &tx); err != nil {
+	var res models.PromptResponse
+	if err := json.Unmarshal([]byte(jsonStr), &res); err != nil {
 		logx.Logger.Debug("error in json unmarshal")
 		return nil, err
 	}
+	if !res.IsTransaction {
+		err := fmt.Errorf("email is not a transaction")
+		return nil, err
+	}
+
+	tx := res.Transaction
 
 	return &tx, nil
 }
@@ -152,6 +167,10 @@ func getActivationLink(emailBody resend.ReceivedEmail) (string, error) {
 		return "", fmt.Errorf("activation link not found")
 	}
 	return match, nil
+}
+
+func handleNonTransactionEmail(emailContent string, user db.SupabaseUser) error {
+	return nil
 }
 
 func ClearEmailQueue() error {

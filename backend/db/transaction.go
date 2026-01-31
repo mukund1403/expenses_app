@@ -48,7 +48,7 @@ func PostTransaction(transaction models.Transaction) (*models.Transaction, error
 
 	createURL := fmt.Sprintf("%s/rest/v1/transactions", supabaseURL)
 	if transaction.UserId == "" || transaction.Merchant == "" || transaction.Amount == 0 ||
-		transaction.Account == "" || transaction.Category == "" || transaction.DateTime.IsZero() {
+		transaction.Account == "" || transaction.Category == "" || transaction.DateTime == nil {
 		return nil, errors.New("one or more fields are empty")
 	}
 
