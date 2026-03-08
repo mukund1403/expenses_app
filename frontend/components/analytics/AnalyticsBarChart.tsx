@@ -57,6 +57,7 @@ export default function AnalyticsBarChart({
     return row;
   });
 
+  // eslint-disable-next-line
   const handleClick = (data: any) => {
     if (data?.activePayload?.[0]) {
       onSelectCategory(data.activePayload[0].payload.rawCategory);

@@ -31,10 +31,14 @@ const CustomTooltip = ({
   payload,
 }: {
   active?: boolean;
-  payload?:{
+  payload?: {
     payload: {
       name: string;
-      currencyBreakdowns: { currency: string; total: number; percentage: number }[];
+      currencyBreakdowns: {
+        currency: string;
+        total: number;
+        percentage: number;
+      }[];
     };
   }[];
 }) => {
@@ -91,6 +95,7 @@ export default function AnalyticsPieChart({
           outerRadius={110}
           innerRadius={50}
           dataKey='value'
+          // eslint-disable-next-line
           onClick={(entry) => onSelectCategory((entry as any).rawCategory)}
           style={{ cursor: 'pointer' }}
         >
