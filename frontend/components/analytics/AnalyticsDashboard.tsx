@@ -43,14 +43,17 @@ export default function AnalyticsDashboard({
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [txType, setTxType] = useState<TxType>('expense');
-  const [chartType, setChartType] = useState<ChartType>(isMobile ? 'bar' : 'pie');
+  const [chartType, setChartType] = useState<ChartType>(
+    isMobile ? 'bar' : 'pie',
+  );
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Conversion state
   const [isConverting, setIsConverting] = useState(false);
   const [conversionError, setConversionError] = useState<string | null>(null);
   const [baseCurrency, setBaseCurrency] = useState<string | null>(null);
-  const [convertedAnalytics, setConvertedAnalytics] = useState<MonthlyAnalytics | null>(null);
+  const [convertedAnalytics, setConvertedAnalytics] =
+    useState<MonthlyAnalytics | null>(null);
 
   const handleMonthChange = (y: number, m: number) => {
     setYear(y);
@@ -68,7 +71,10 @@ export default function AnalyticsDashboard({
     [transactionList, year, month, txType],
   );
 
-  const analytics = useMemo(() => computeMonthlyAnalytics(filtered), [filtered]);
+  const analytics = useMemo(
+    () => computeMonthlyAnalytics(filtered),
+    [filtered],
+  );
 
   // Unique currencies present this month
   const activeCurrencies = useMemo(
@@ -108,7 +114,9 @@ export default function AnalyticsDashboard({
   const selectedCategoryData = useMemo(
     () =>
       selectedCategory
-        ? displayAnalytics.categoryData.find((d) => d.category === selectedCategory) ?? null
+        ? (displayAnalytics.categoryData.find(
+            (d) => d.category === selectedCategory,
+          ) ?? null)
         : null,
     [selectedCategory, displayAnalytics],
   );
@@ -128,7 +136,11 @@ export default function AnalyticsDashboard({
           gap: 1,
         }}
       >
-        <MonthNavigator year={year} month={month} onChange={handleMonthChange} />
+        <MonthNavigator
+          year={year}
+          month={month}
+          onChange={handleMonthChange}
+        />
       </Box>
 
       {/* Expense / Income toggle */}
@@ -251,7 +263,12 @@ export default function AnalyticsDashboard({
         }}
       >
         {displayAnalytics.categoryData.length === 0 ? (
-          <Typography variant='body2' color='text.secondary' textAlign='center' py={4}>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+            textAlign='center'
+            py={4}
+          >
             No {txType} transactions for this month.
           </Typography>
         ) : chartType === 'bar' ? (

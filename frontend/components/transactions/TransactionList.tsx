@@ -41,8 +41,8 @@ export default function TransactionList({
             : '';
           const formattedCategory = category
             ? category
-              .replace(/_/g, ' ')
-              .replace(/\b\w/g, (char) => char.toUpperCase())
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase())
             : '';
           const secondaryText = [formattedCategory, formattedDatetime]
             .filter(Boolean)

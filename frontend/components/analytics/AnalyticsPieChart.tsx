@@ -1,6 +1,13 @@
 'use client';
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from 'recharts';
 import { useTheme } from '@mui/material';
 import { CategoryData } from '@/components/analytics/utils';
 
@@ -11,7 +18,12 @@ interface AnalyticsPieChartProps {
 }
 
 const CURRENCY_COLORS = [
-  '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#f43f5e', '#a855f7',
+  '#6366f1',
+  '#22d3ee',
+  '#f59e0b',
+  '#10b981',
+  '#f43f5e',
+  '#a855f7',
 ];
 
 // For pie we show one slice per category, stacked amounts summed for sizing
@@ -39,7 +51,7 @@ export default function AnalyticsPieChart({
     payload,
   }: {
     active?: boolean;
-    payload?: { payload: typeof chartData[0] }[];
+    payload?: { payload: (typeof chartData)[0] }[];
   }) => {
     if (!active || !payload?.length) return null;
     const d = payload[0].payload;
@@ -81,7 +93,8 @@ export default function AnalyticsPieChart({
               key={entry.rawCategory}
               fill={entry.color}
               opacity={
-                selectedCategory === null || selectedCategory === entry.rawCategory
+                selectedCategory === null ||
+                selectedCategory === entry.rawCategory
                   ? 1
                   : 0.35
               }
@@ -95,10 +108,7 @@ export default function AnalyticsPieChart({
           ))}
         </Pie>
         <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ fontSize: 12 }}
-          formatter={(value) => value}
-        />
+        <Legend wrapperStyle={{ fontSize: 12 }} formatter={(value) => value} />
       </PieChart>
     </ResponsiveContainer>
   );

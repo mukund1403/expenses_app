@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  Box,
-  IconButton,
-  MenuItem,
-  Select,
-  Typography,
-} from '@mui/material';
+import { Box, IconButton, MenuItem, Select, Typography } from '@mui/material';
 import { ChevronLeftRounded, ChevronRightRounded } from '@mui/icons-material';
 import { MONTH_NAMES } from '@/components/analytics/utils';
 

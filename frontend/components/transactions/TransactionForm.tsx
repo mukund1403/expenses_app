@@ -100,19 +100,20 @@ export default function TransactionForm({
 
   const createBlurHandler =
     <K extends keyof Transaction>(field: K) =>
-      () => {
-        const error = validateTransactionField(field, transaction[field]);
-        setErrors((prev) => ({
-          ...prev,
-          [field]: error ?? '',
-        }));
-      };
+    () => {
+      const error = validateTransactionField(field, transaction[field]);
+      setErrors((prev) => ({
+        ...prev,
+        [field]: error ?? '',
+      }));
+    };
 
   const onTypeChange = (type: TransactionType) => {
     updateField('type', type);
-    const categoryMap = type === 'income'
-      ? transactionCategoryIncomeMap
-      : transactionCategoryExpenseMap;
+    const categoryMap =
+      type === 'income'
+        ? transactionCategoryIncomeMap
+        : transactionCategoryExpenseMap;
     updateField('category', Object.keys(categoryMap)[0]);
   };
   // const onTypeChange = (type: TransactionType) => {
@@ -314,7 +315,8 @@ export default function TransactionForm({
                 variant={name === activeCategory ? 'contained' : 'outlined'}
                 sx={{
                   m: '0.2rem',
-                  color: name === activeCategory ? 'text.primary' : 'primary.main',
+                  color:
+                    name === activeCategory ? 'text.primary' : 'primary.main',
                 }}
                 onClick={() => updateField('category', name)}
               >

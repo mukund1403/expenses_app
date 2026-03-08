@@ -4,12 +4,18 @@ export async function GET(req: NextRequest) {
   const base = req.nextUrl.searchParams.get('base');
 
   if (!base) {
-    return NextResponse.json({ error: 'Missing base currency' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Missing base currency' },
+      { status: 400 },
+    );
   }
 
   const apiKey = process.env.EXCHANGE_RATE_API_KEY;
   if (!apiKey) {
-    return NextResponse.json({ error: 'API key not configured' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'API key not configured' },
+      { status: 500 },
+    );
   }
 
   try {

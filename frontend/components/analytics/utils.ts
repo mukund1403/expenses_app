@@ -91,8 +91,18 @@ export function computeMonthlyAnalytics(
 }
 
 export const MONTH_NAMES = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
 ];
 
 /* Exchange Rate Utilities */
@@ -190,7 +200,8 @@ export function convertAnalytics(
   // Recompute currency totals in base
   categoryData.forEach((d) => {
     const total = d.currencyBreakdowns[0].total;
-    convertedCurrencyTotals[base] = (convertedCurrencyTotals[base] ?? 0) + total;
+    convertedCurrencyTotals[base] =
+      (convertedCurrencyTotals[base] ?? 0) + total;
   });
 
   // Recalculate percentages

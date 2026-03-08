@@ -21,7 +21,12 @@ interface AnalyticsBarChartProps {
 
 // Generate distinct colors for currencies
 const CURRENCY_COLORS = [
-  '#6366f1', '#22d3ee', '#f59e0b', '#10b981', '#f43f5e', '#a855f7',
+  '#6366f1',
+  '#22d3ee',
+  '#f59e0b',
+  '#10b981',
+  '#f43f5e',
+  '#a855f7',
 ];
 
 export default function AnalyticsBarChart({
@@ -52,7 +57,9 @@ export default function AnalyticsBarChart({
     return row;
   });
 
-  const handleClick = (data: { activePayload?: { payload: { rawCategory: string } }[] }) => {
+  const handleClick = (data: {
+    activePayload?: { payload: { rawCategory: string } }[];
+  }) => {
     if (data?.activePayload?.[0]) {
       onSelectCategory(data.activePayload[0].payload.rawCategory);
     }
@@ -98,13 +105,16 @@ export default function AnalyticsBarChart({
             dataKey={currency}
             stackId='a'
             fill={CURRENCY_COLORS[i % CURRENCY_COLORS.length]}
-            radius={i === allCurrencies.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+            radius={
+              i === allCurrencies.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]
+            }
           >
             {chartData.map((entry) => (
               <Cell
                 key={entry.rawCategory as string}
                 opacity={
-                  selectedCategory === null || selectedCategory === entry.rawCategory
+                  selectedCategory === null ||
+                  selectedCategory === entry.rawCategory
                     ? 1
                     : 0.35
                 }

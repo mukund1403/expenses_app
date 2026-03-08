@@ -12,13 +12,16 @@ export default async function AnalyticsPage() {
     redirect('/login');
   }
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`, {
-    method: 'GET',
-    headers: {
-      Authorization: `Bearer ${jwt}`,
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+      cache: 'no-store',
     },
-    cache: 'no-store',
-  });
+  );
 
   if (res.status === 401) {
     redirect('/login');

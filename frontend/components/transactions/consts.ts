@@ -5,14 +5,14 @@ import {
   ReceiptRounded,
   DirectionsCarFilledRounded,
   LocalDiningRounded,
-  LocalHospitalRounded,        // keep for any existing use
+  LocalHospitalRounded, // keep for any existing use
   FlightRounded,
   ShoppingCartRounded,
   WorkRounded,
-  LocalGroceryStoreRounded,    // new: groceries
-  TheaterComedyRounded,        // new: entertainment
-  SwapHorizRounded,            // new: transfers
-  HelpOutlineRounded, 
+  LocalGroceryStoreRounded, // new: groceries
+  TheaterComedyRounded, // new: entertainment
+  SwapHorizRounded, // new: transfers
+  HelpOutlineRounded,
 } from '@mui/icons-material';
 
 type ISO8601String = string;
@@ -46,26 +46,26 @@ export interface CurrencySummary {
   expense: number;
   income: number;
 }
-export const transactionCategoryExpenseMap: Record <
+export const transactionCategoryExpenseMap: Record<
   string,
   { icon: ElementType<SvgIconProps> }
 > = {
   food_and_dining: { icon: LocalDiningRounded },
-  travel:          { icon: FlightRounded },
-  transport:       { icon: DirectionsCarFilledRounded },
-  groceries:       { icon: LocalGroceryStoreRounded },
-  utilities:       { icon: ReceiptRounded },
-  transfers:       { icon: SwapHorizRounded },
-  entertainment:   { icon: TheaterComedyRounded },
-  shopping:        { icon: ShoppingCartRounded },
-  others:          { icon: HelpOutlineRounded },
+  travel: { icon: FlightRounded },
+  transport: { icon: DirectionsCarFilledRounded },
+  groceries: { icon: LocalGroceryStoreRounded },
+  utilities: { icon: ReceiptRounded },
+  transfers: { icon: SwapHorizRounded },
+  entertainment: { icon: TheaterComedyRounded },
+  shopping: { icon: ShoppingCartRounded },
+  others: { icon: HelpOutlineRounded },
 };
 
-export const transactionCategoryIncomeMap: Record <
+export const transactionCategoryIncomeMap: Record<
   string,
   { icon: ElementType<SvgIconProps> }
 > = {
-  salary:    { icon: WorkRounded },
+  salary: { icon: WorkRounded },
   transfers: { icon: SwapHorizRounded },
 };
 // export const transactionCategoryExpenseMap: Record<

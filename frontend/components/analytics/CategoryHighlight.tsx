@@ -33,7 +33,13 @@ export default function CategoryHighlight({
       }}
     >
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Icon sx={{ color: 'primary.main' }} />
           <Typography variant='subtitle1' fontWeight={600}>
@@ -49,20 +55,23 @@ export default function CategoryHighlight({
 
       {/* Per-currency breakdown */}
       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-        {categoryData.currencyBreakdowns.map(({ currency, total, percentage }) => (
-          <Chip
-            key={currency}
-            label={`${currency} ${total.toFixed(2)} · ${percentage.toFixed(1)}% of ${currency} total`}
-            variant='outlined'
-            size='small'
-            sx={{ fontSize: '0.8rem' }}
-          />
-        ))}
+        {categoryData.currencyBreakdowns.map(
+          ({ currency, total, percentage }) => (
+            <Chip
+              key={currency}
+              label={`${currency} ${total.toFixed(2)} · ${percentage.toFixed(1)}% of ${currency} total`}
+              variant='outlined'
+              size='small'
+              sx={{ fontSize: '0.8rem' }}
+            />
+          ),
+        )}
       </Box>
 
       {/* Transaction share */}
       <Typography variant='caption' color='text.secondary'>
-        {categoryData.percentageOfGrandTotal.toFixed(1)}% of this month's transactions
+        {categoryData.percentageOfGrandTotal.toFixed(1)}% of this month's
+        transactions
       </Typography>
     </Box>
   );
