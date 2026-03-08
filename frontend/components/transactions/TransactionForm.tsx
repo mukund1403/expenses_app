@@ -80,19 +80,13 @@ export default function TransactionForm({
     }));
   }, [transactionCategoryMap]);
 
-  const activeCategory = useMemo(() => {
-    return (
-      Object.entries(transactionCategoryMap).find(([, { subcategories }]) =>
-        subcategories.includes(transaction.category),
-      )?.[0] ?? ''
-    );
-  }, [transactionCategoryMap, transaction.category]);
+  const activeCategory = transaction.category;
 
-  const subcategoryList = useMemo(() => {
-    return activeCategory
-      ? transactionCategoryMap[activeCategory].subcategories
-      : [];
-  }, [activeCategory, transactionCategoryMap]);
+  // const subcategoryList = useMemo(() => {
+  //   return activeCategory
+  //     ? transactionCategoryMap[activeCategory].subcategories
+  //     : [];
+  // }, [activeCategory, transactionCategoryMap]);
 
   const updateField = <K extends keyof Transaction>(
     key: K,
@@ -115,14 +109,22 @@ export default function TransactionForm({
     };
 
   const onTypeChange = (type: TransactionType) => {
-    updateField('type', type as TransactionType);
+    updateField('type', type);
     const categoryMap =
       type === 'income'
         ? transactionCategoryIncomeMap
         : transactionCategoryExpenseMap;
-    const firstCategoryKey = Object.keys(categoryMap)[0];
-    updateField('category', categoryMap[firstCategoryKey].subcategories[0]);
+    updateField('category', Object.keys(categoryMap)[0]);
   };
+  // const onTypeChange = (type: TransactionType) => {
+  //   updateField('type', type as TransactionType);
+  //   const categoryMap =
+  //     type === 'income'
+  //       ? transactionCategoryIncomeMap
+  //       : transactionCategoryExpenseMap;
+  //   const firstCategoryKey = Object.keys(categoryMap)[0];
+  //   updateField('category', categoryMap[firstCategoryKey].subcategories[0]);
+  // };
 
   /* Button Press Handlers */
 
@@ -316,6 +318,26 @@ export default function TransactionForm({
                   color:
                     name === activeCategory ? 'text.primary' : 'primary.main',
                 }}
+                onClick={() => updateField('category', name)}
+              >
+                {name}
+              </Button>
+            ))}
+          </Stack>
+        </TransactionFormGrid>
+        {/* <TransactionFormGrid size={12}>
+          <TransactionFormLabel>Category</TransactionFormLabel>
+          <Stack direction='row' flexWrap='wrap'>
+            {categoryList.map(({ name, icon: Icon }) => (
+              <Button
+                key={name}
+                startIcon={<Icon />}
+                variant={name === activeCategory ? 'contained' : 'outlined'}
+                sx={{
+                  m: '0.2rem',
+                  color:
+                    name === activeCategory ? 'text.primary' : 'primary.main',
+                }}
                 onClick={() => {
                   if (name === activeCategory) return;
 
@@ -355,7 +377,7 @@ export default function TransactionForm({
               ));
             })()}
           </Stack>
-        </TransactionFormGrid>
+        </TransactionFormGrid> */}
         <TransactionFormGrid size={12}>
           <TransactionFormLabel>Amount & Currency</TransactionFormLabel>
           <Box sx={{ display: 'flex' }}>

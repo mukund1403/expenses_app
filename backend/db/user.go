@@ -20,6 +20,7 @@ type SupabaseUser struct {
 	Name           string `json:"name,omitempty"`
 	Username       string `json:"username,omitempty"`        // cannot modify
 	ActivationLink string `json:"activation_link,omitempty"` // user cannot modify
+	NonTxEmails    int    `json:"non_tx_emails,omitempty"`
 }
 
 // we can retrieve user details by username, email or id
