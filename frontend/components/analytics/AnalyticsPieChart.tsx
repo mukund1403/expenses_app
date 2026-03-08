@@ -26,6 +26,36 @@ const CURRENCY_COLORS = [
   '#a855f7',
 ];
 
+const CustomTooltip = ({
+  active,
+  payload,
+}: {
+  active?: boolean;
+  payload?: { payload: (typeof chartData)[0] }[];
+}) => {
+  const theme = useTheme();
+  if (!active || !payload?.length) return null;
+  const d = payload[0].payload;
+  return (
+    <div
+      style={{
+        backgroundColor: theme.palette.background.paper,
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 8,
+        padding: '0.5rem 0.75rem',
+        fontSize: 12,
+      }}
+    >
+      <strong>{d.name}</strong>
+      {d.currencyBreakdowns.map(({ currency, total, percentage }) => (
+        <div key={currency}>
+          {currency} {total.toFixed(2)} · {percentage.toFixed(1)}%
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // For pie we show one slice per category, stacked amounts summed for sizing
 // but tooltip shows per-currency breakdown
 export default function AnalyticsPieChart({
@@ -45,35 +75,6 @@ export default function AnalyticsPieChart({
     currencyBreakdowns: d.currencyBreakdowns,
     color: CURRENCY_COLORS[i % CURRENCY_COLORS.length],
   }));
-
-  const CustomTooltip = ({
-    active,
-    payload,
-  }: {
-    active?: boolean;
-    payload?: { payload: (typeof chartData)[0] }[];
-  }) => {
-    if (!active || !payload?.length) return null;
-    const d = payload[0].payload;
-    return (
-      <div
-        style={{
-          backgroundColor: theme.palette.background.paper,
-          border: `1px solid ${theme.palette.divider}`,
-          borderRadius: 8,
-          padding: '0.5rem 0.75rem',
-          fontSize: 12,
-        }}
-      >
-        <strong>{d.name}</strong>
-        {d.currencyBreakdowns.map(({ currency, total, percentage }) => (
-          <div key={currency}>
-            {currency} {total.toFixed(2)} · {percentage.toFixed(1)}%
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <ResponsiveContainer width='100%' height={320}>

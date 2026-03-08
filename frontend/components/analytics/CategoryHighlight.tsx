@@ -1,5 +1,6 @@
 'use client';
 
+import { createElement } from 'react';
 import { Box, Chip, Divider, IconButton, Typography } from '@mui/material';
 import { CloseRounded } from '@mui/icons-material';
 import { CategoryData } from '@/components/analytics/utils';
@@ -14,7 +15,11 @@ export default function CategoryHighlight({
   categoryData,
   onClose,
 }: CategoryHighlightProps) {
-  const Icon = getTransactionIcon(categoryData.category);
+  {
+    createElement(getTransactionIcon(categoryData.category), {
+      sx: { color: 'primary.main' },
+    });
+  }
 
   const formattedCategory = categoryData.category
     .replace(/_/g, ' ')
@@ -41,7 +46,9 @@ export default function CategoryHighlight({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Icon sx={{ color: 'primary.main' }} />
+          {createElement(getTransactionIcon(categoryData.category), {
+            sx: { color: 'primary.main' },
+          })}
           <Typography variant='subtitle1' fontWeight={600}>
             {formattedCategory}
           </Typography>
@@ -70,7 +77,7 @@ export default function CategoryHighlight({
 
       {/* Transaction share */}
       <Typography variant='caption' color='text.secondary'>
-        {categoryData.percentageOfGrandTotal.toFixed(1)}% of this month's
+        {categoryData.percentageOfGrandTotal.toFixed(1)}% of this month&apos;s
         transactions
       </Typography>
     </Box>
