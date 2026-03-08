@@ -5,10 +5,14 @@ import {
   ReceiptRounded,
   DirectionsCarFilledRounded,
   LocalDiningRounded,
-  LocalHospitalRounded,
+  LocalHospitalRounded, // keep for any existing use
   FlightRounded,
   ShoppingCartRounded,
   WorkRounded,
+  LocalGroceryStoreRounded, // new: groceries
+  TheaterComedyRounded, // new: entertainment
+  SwapHorizRounded, // new: transfers
+  HelpOutlineRounded,
 } from '@mui/icons-material';
 
 type ISO8601String = string;
@@ -32,7 +36,7 @@ export const emptyTransaction = {
   amount: 0,
   currency: '',
   account: '',
-  category: 'home',
+  category: 'others',
   datetime: '',
   type: 'expense',
 };
@@ -42,85 +46,83 @@ export interface CurrencySummary {
   expense: number;
   income: number;
 }
-
 export const transactionCategoryExpenseMap: Record<
   string,
-  { subcategories: string[]; icon: ElementType<SvgIconProps> }
+  { icon: ElementType<SvgIconProps> }
 > = {
-  Home: {
-    subcategories: ['home', 'family & pets'],
-    icon: HomeRounded,
-  },
-  Utilities: {
-    subcategories: [
-      'bills & utilities',
-      'loans & financial fees',
-      'taxes',
-      'insurance',
-    ],
-    icon: ReceiptRounded,
-  },
-  Transport: {
-    subcategories: [
-      'auto & transport',
-      'vehicle & repairs',
-      'gas',
-      'other transportation',
-    ],
-    icon: DirectionsCarFilledRounded,
-  },
-  Food: {
-    subcategories: [
-      'dining',
-      'food & drink',
-      'groceries',
-      'restaurants & other',
-    ],
-    icon: LocalDiningRounded,
-  },
-  'Health & Fitness': {
-    subcategories: [
-      'health & wellness',
-      'medical',
-      'gym',
-      'other health & wellness',
-    ],
-    icon: LocalHospitalRounded,
-  },
-  'Travel & Leisure': {
-    subcategories: ['travel & vacation', 'entertainment & lifestyle'],
-    icon: FlightRounded,
-  },
-  'Shopping & Subscriptions': {
-    subcategories: ['shopping', 'clothing', 'subscriptions', 'other shopping'],
-    icon: ShoppingCartRounded,
-  },
-  'Work & Income': {
-    subcategories: [
-      'business & work',
-      'primary paycheck',
-      'business income',
-      'repayment from others',
-      'education',
-      'gifts & donations',
-      'transfer',
-      'credit card payment',
-      'other expenses',
-      'other income',
-    ],
-    icon: WorkRounded,
-  },
-} as const;
+  food_and_dining: { icon: LocalDiningRounded },
+  travel: { icon: FlightRounded },
+  transport: { icon: DirectionsCarFilledRounded },
+  groceries: { icon: LocalGroceryStoreRounded },
+  utilities: { icon: ReceiptRounded },
+  transfers: { icon: SwapHorizRounded },
+  entertainment: { icon: TheaterComedyRounded },
+  shopping: { icon: ShoppingCartRounded },
+  others: { icon: HelpOutlineRounded },
+};
 
 export const transactionCategoryIncomeMap: Record<
   string,
-  { subcategories: string[]; icon: ElementType<SvgIconProps> }
+  { icon: ElementType<SvgIconProps> }
 > = {
-  'Work & Income': {
-    subcategories: ['transfers', 'salary'],
-    icon: WorkRounded,
-  },
-} as const;
+  salary: { icon: WorkRounded },
+  transfers: { icon: SwapHorizRounded },
+};
+// export const transactionCategoryExpenseMap: Record<
+//   string,
+//   { subcategories: string[]; icon: ElementType<SvgIconProps> }
+// > = {
+//   food_and_dining: {
+//     subcategories: ['dining', 'food & drink', 'cafes', 'restaurants & other'],
+//     icon: LocalDiningRounded,
+//   },
+//   travel: {
+//     subcategories: ['flights', 'hotels', 'airbnb', 'travel & vacation'],
+//     icon: FlightRounded,
+//   },
+//   transport: {
+//     subcategories: ['bus', 'MRT', 'ride hailing', 'auto & transport'],
+//     icon: DirectionsCarFilledRounded,
+//   },
+//   groceries: {
+//     subcategories: ['supermarket', 'grocery store', 'fresh produce'],
+//     icon: LocalGroceryStoreRounded,
+//   },
+//   utilities: {
+//     subcategories: ['bills & utilities', 'telecom', 'power', 'water', 'insurance'],
+//     icon: ReceiptRounded,
+//   },
+//   transfers: {
+//     subcategories: ['peer-to-peer', 'wallet transfer', 'PayNow', 'PayLah'],
+//     icon: SwapHorizRounded,
+//   },
+//   entertainment: {
+//     subcategories: ['movies', 'attractions', 'theme parks', 'entertainment & lifestyle'],
+//     icon: TheaterComedyRounded,
+//   },
+//   shopping: {
+//     subcategories: ['retail', 'clothing', 'subscriptions', 'online shopping'],
+//     icon: ShoppingCartRounded,
+//   },
+//   others: {
+//     subcategories: ['other expenses', 'miscellaneous'],
+//     icon: HelpOutlineRounded,
+//   },
+// };
+
+// export const transactionCategoryIncomeMap: Record<
+//   string,
+//   { subcategories: string[]; icon: ElementType<SvgIconProps> }
+// > = {
+//   salary: {
+//     subcategories: ['primary paycheck', 'business income', 'freelance'],
+//     icon: WorkRounded,
+//   },
+//   transfers: {
+//     subcategories: ['repayment from others', 'wallet transfer', 'PayNow'],
+//     icon: SwapHorizRounded,
+//   },
+// };
 
 // prettier-ignore
 export const currencyList: string[] = [

@@ -40,7 +40,9 @@ export default function TransactionList({
             ? new Date(datetime).toLocaleString('en-US', datetimeOptions)
             : '';
           const formattedCategory = category
-            ? category.replace(/\b\w/g, (char) => char.toUpperCase())
+            ? category
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, (char) => char.toUpperCase())
             : '';
           const secondaryText = [formattedCategory, formattedDatetime]
             .filter(Boolean)
