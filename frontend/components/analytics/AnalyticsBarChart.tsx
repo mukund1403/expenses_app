@@ -57,9 +57,7 @@ export default function AnalyticsBarChart({
     return row;
   });
 
-  const handleClick = (data: {
-    activePayload?: { payload: { rawCategory: string } }[];
-  }) => {
+  const handleClick = (data: any) => {
     if (data?.activePayload?.[0]) {
       onSelectCategory(data.activePayload[0].payload.rawCategory);
     }

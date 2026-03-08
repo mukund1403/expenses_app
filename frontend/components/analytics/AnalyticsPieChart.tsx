@@ -31,7 +31,12 @@ const CustomTooltip = ({
   payload,
 }: {
   active?: boolean;
-  payload?: { payload: (typeof chartData)[0] }[];
+  payload?:{
+    payload: {
+      name: string;
+      currencyBreakdowns: { currency: string; total: number; percentage: number }[];
+    };
+  }[];
 }) => {
   const theme = useTheme();
   if (!active || !payload?.length) return null;
@@ -86,7 +91,7 @@ export default function AnalyticsPieChart({
           outerRadius={110}
           innerRadius={50}
           dataKey='value'
-          onClick={(entry) => onSelectCategory(entry.rawCategory)}
+          onClick={(entry) => onSelectCategory((entry as any).rawCategory)}
           style={{ cursor: 'pointer' }}
         >
           {chartData.map((entry) => (
