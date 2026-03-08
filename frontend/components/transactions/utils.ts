@@ -11,20 +11,10 @@ import {
 
 /* UI Logic */
 
-export function getTransactionIcon(
-  subcategory: string,
-): ElementType<SvgIconProps> {
-  for (const map of [
-    transactionCategoryIncomeMap,
-    transactionCategoryExpenseMap,
-  ]) {
-    for (const category of Object.values(map)) {
-      if (category.subcategories.includes(subcategory)) {
-        return category.icon;
-      }
-    }
+export function getTransactionIcon(category: string): ElementType<SvgIconProps> {
+  for (const map of [transactionCategoryIncomeMap, transactionCategoryExpenseMap]) {
+    if (category in map) return map[category].icon;
   }
-
   return MoreHorizRounded;
 }
 
