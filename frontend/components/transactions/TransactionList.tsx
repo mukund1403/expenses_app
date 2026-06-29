@@ -112,10 +112,10 @@ function SwipeableRow({
 
   const formattedDate = datetime
     ? new Date(datetime).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric',
-    })
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+      })
     : '';
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -334,7 +334,9 @@ export default function TransactionList({
 
     load();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [baseCurrency]);
 
   const handlePrevMonth = () => {
@@ -608,15 +610,15 @@ export default function TransactionList({
 
                   const formattedCategory = category
                     ? category
-                      .replace(/_/g, ' ')
-                      .replace(/\b\w/g, (c) => c.toUpperCase())
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, (c) => c.toUpperCase())
                     : '';
                   const formattedDate = datetime
                     ? new Date(datetime).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: '2-digit',
-                      year: 'numeric',
-                    })
+                        month: 'short',
+                        day: '2-digit',
+                        year: 'numeric',
+                      })
                     : '';
 
                   return (
