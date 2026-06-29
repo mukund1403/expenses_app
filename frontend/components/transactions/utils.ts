@@ -11,6 +11,31 @@ import {
 
 /* UI Logic */
 
+const SYMBOL_OVERRIDES: Record<string, string> = {
+  SGD: 'S$',
+  HKD: 'HK$',
+  AUD: 'A$',
+  CAD: 'C$',
+  NZD: 'NZ$',
+};
+
+export function getCurrencySymbol(currency: string): string {
+  if (SYMBOL_OVERRIDES[currency]) return SYMBOL_OVERRIDES[currency];
+  try {
+    return (
+      Intl.NumberFormat('en', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+      })
+        .formatToParts(0)
+        .find((p) => p.type === 'currency')?.value ?? currency
+    );
+  } catch {
+    return currency;
+  }
+}
+
 export function getTransactionIcon(
   category: string,
 ): ElementType<SvgIconProps> {

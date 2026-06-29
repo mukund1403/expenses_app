@@ -14,44 +14,44 @@ export default async function TransactionsEditPage({
     return <Alert severity='error'>Transaction not found.</Alert>;
   }
 
-  let transaction: Transaction;
-
   const cookie = await cookies();
-  const jwt = cookie.get('token')?.value; // retrieve JWT from HttpOnly cookie
+  const jwt = cookie.get('token')?.value;
 
   if (!jwt) {
-    redirect('/login'); // no JWT → redirect to login
+    redirect('/login');
   }
+
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_GOLANG_URL}/transactions/`,
     {
       method: 'GET',
       headers: {
-        Authorization: `Bearer ${jwt}`, // send JWT as Bearer token
+        Authorization: `Bearer ${jwt}`,
       },
       cache: 'no-store',
     },
   );
 
   if (res.status === 401) {
-    redirect('/login'); // token invalid/expired → redirect
+    redirect('/login');
   }
 
+  if (!res.ok) {
+    return <Alert severity='error'>Failed to fetch transaction data.</Alert>;
+  }
+
+  let transaction: Transaction;
   try {
-    if (!res.ok) {
-      throw new Error(`Request failed: ${res.status}`);
-    }
-
     const data = await res.json();
-
     transaction = data['transaction_list'].find(
       (t: Transaction) => t.transaction_id === transaction_id,
     );
-    if (!transaction) {
-      return <Alert severity='error'>Transaction not found.</Alert>;
-    }
   } catch (e) {
     return <Alert severity='error'>Failed to fetch transaction data.</Alert>;
+  }
+
+  if (!transaction!) {
+    return <Alert severity='error'>Transaction not found.</Alert>;
   }
 
   return <TransactionForm type='edit' initialTransaction={transaction} />;
