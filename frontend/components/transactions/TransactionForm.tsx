@@ -14,6 +14,11 @@ import {
   Typography,
   useMediaQuery,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -59,6 +64,10 @@ export default function TransactionForm({
 
   const [transaction, setTransaction] = useState<Transaction>(
     (initTx as Transaction) ?? emptyTransaction,
+  );
+
+  const [amountInput, setAmountInput] = useState<string>(
+    initTx ? String(initTx.amount) : '',
   );
 
   const [errors, setErrors] = useState<
@@ -130,23 +139,28 @@ export default function TransactionForm({
 
   const handleReset = () => {
     setTransaction((initTx as Transaction) ?? emptyTransaction);
+    setAmountInput(initTx ? String(initTx.amount) : '');
   };
 
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
   const handleDelete = () => {
-    if (transaction.transaction_id) {
-      deleteTransactionAction(transaction.transaction_id)
-        .then(() => {
-          showSnackbar('Transaction Deleted Successfully.', 'success');
-          router.push('/transactions');
-        })
-        .catch((err: unknown) => {
-          const message =
-            err instanceof Error
-              ? err.message
-              : 'Failed to Delete Transaction.';
-          showSnackbar(message, 'error');
-        });
-    }
+    if (!transaction.transaction_id) return;
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    setDeleteDialogOpen(false);
+    deleteTransactionAction(transaction.transaction_id)
+      .then(() => {
+        showSnackbar('Transaction Deleted Successfully.', 'success');
+        router.back();
+      })
+      .catch((err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : 'Failed to Delete Transaction.';
+        showSnackbar(message, 'error');
+      });
   };
 
   const handleSubmit = () => {
@@ -180,7 +194,7 @@ export default function TransactionForm({
       putTransactionAction(transaction, initTx)
         .then(() => {
           showSnackbar('Transaction Updated Successfully.', 'success');
-          router.push('/transactions');
+          router.back();
         })
         .catch((err: unknown) => {
           const message =
@@ -410,23 +424,28 @@ export default function TransactionForm({
             />
             <TextField
               id='amount-input-label'
-              value={transaction.amount}
-              type='number'
+              value={amountInput}
+              type='text'
+              inputMode='decimal'
               onChange={(e) => {
-                // TODO: Find more robust way to enforce Float X.XX
-                const value = e.target.value;
-                updateField('amount', value === '' ? 0 : Number(value));
+                const raw = e.target.value;
+                if (/^\d*\.?\d{0,2}$/.test(raw) || raw === '') {
+                  setAmountInput(raw);
+                  const parsed = parseFloat(raw);
+                  updateField('amount', isNaN(parsed) ? 0 : parsed);
+                }
               }}
-              onBlur={createBlurHandler('amount')}
+              onBlur={() => {
+                const parsed = parseFloat(amountInput);
+                if (!isNaN(parsed)) {
+                  setAmountInput(parsed.toFixed(2));
+                  updateField('amount', parsed);
+                }
+                createBlurHandler('amount')();
+              }}
               error={!!errors.amount}
               fullWidth
-              slotProps={{
-                input: {
-                  sx: {
-                    fontSize: 'small',
-                  },
-                },
-              }}
+              slotProps={{ input: { sx: { fontSize: 'small' } } }}
             />
           </Box>
           <FormHelperText error component='div'>
@@ -457,8 +476,16 @@ export default function TransactionForm({
                 },
               }}
               onChange={(date: Dayjs | null) => {
-                const isoString = date ? date.toISOString() : '';
-                updateField('datetime', isoString);
+                if (!date) {
+                  updateField('datetime', '');
+                  return;
+                }
+                const now = dayjs();
+                const withCurrentTime = date
+                  .hour(now.hour())
+                  .minute(now.minute())
+                  .second(now.second());
+                updateField('datetime', withCurrentTime.toISOString());
               }}
             />
           </LocalizationProvider>
@@ -514,6 +541,24 @@ export default function TransactionForm({
           </Grid>
         </TransactionFormGrid>
       </Grid>
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Delete Transaction</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this transaction? This action cannot
+            be undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={handleDeleteConfirm} color='error'>
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
     </form>
   );
 }
