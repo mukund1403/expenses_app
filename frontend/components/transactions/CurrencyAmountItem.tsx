@@ -1,5 +1,6 @@
-import { Box, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { TransactionType } from '@/components/transactions/consts';
+import { getCurrencySymbol } from '@/components/transactions/utils';
 
 export default function CurrencyAmountItem({
   currency,
@@ -10,43 +11,18 @@ export default function CurrencyAmountItem({
   amount: string;
   type: TransactionType;
 }) {
+  const symbol = getCurrencySymbol(currency);
+
   return (
-    <Box
+    <Typography
       sx={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-end',
-        gap: 0.4,
+        lineHeight: 1,
+        fontSize: '0.95rem',
+        fontWeight: 500,
+        color: type === 'income' ? 'success.main' : 'error.main',
       }}
     >
-      <Box
-        sx={{
-          borderRadius: '0.3rem',
-          backgroundColor: 'primary.main',
-          p: '0.2rem',
-        }}
-      >
-        <Typography
-          sx={{
-            color: 'primary.contrastText',
-            lineHeight: 1,
-            fontSize: '0.8rem',
-          }}
-        >
-          {currency}
-        </Typography>
-      </Box>
-      <Typography
-        sx={{
-          lineHeight: 1,
-          fontSize: '1.5rem',
-          fontWeight: '500',
-          color: type === 'income' ? 'success.main' : 'text.primary',
-          transform: 'translateY(0.2rem)',
-        }}
-      >
-        {amount}
-      </Typography>
-    </Box>
+      {symbol} {amount}
+    </Typography>
   );
 }
