@@ -38,17 +38,17 @@ import {
   DeleteRounded,
   ChevronRightRounded,
   ChevronLeftRounded,
+  ReceiptLongRounded,
+  UploadFileRounded,
 } from '@mui/icons-material';
+import { SpeedDial, SpeedDialAction } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import {
   Transaction,
   transactionCategoryExpenseMap,
   transactionCategoryIncomeMap,
 } from '@/components/transactions/consts';
-import {
-  getTransactionIcon,
-  getCurrencySymbol,
-} from '@/components/transactions/utils';
+import { getTransactionIcon } from '@/components/transactions/utils';
 import { getExchangeRates, MONTH_NAMES } from '@/components/analytics/utils';
 import CurrencyAmountItem from '@/components/transactions/CurrencyAmountItem';
 import TransactionRowActions from '@/components/transactions/TransactionRowActions';
@@ -706,20 +706,31 @@ export default function TransactionList({
         </DialogActions>
       </Dialog>
 
-      <Fab
-        color='primary'
-        aria-label='add-transaction'
-        href='/transactions/create'
+      <SpeedDial
+        ariaLabel='Add transaction options'
+        icon={<Add />}
         sx={{
           position: 'fixed',
           bottom: { xs: 71, sm: 24 },
           right: 24,
           zIndex: 10,
-          color: 'text.primary',
+        }}
+        FabProps={{
+          color: 'primary',
+          sx: { color: 'text.primary' },
         }}
       >
-        <Add />
-      </Fab>
+        <SpeedDialAction
+          icon={<ReceiptLongRounded />}
+          slotProps={{ tooltip: { title: 'Add transaction', open: true } }}
+          onClick={() => router.push('/transactions/create')}
+        />
+        <SpeedDialAction
+          icon={<UploadFileRounded />}
+          slotProps={{ tooltip: { title: 'Import from Excel', open: true } }}
+          onClick={() => router.push('/transactions/import')}
+        />
+      </SpeedDial>
     </Box>
   );
 }
