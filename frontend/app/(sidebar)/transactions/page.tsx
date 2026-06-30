@@ -47,7 +47,7 @@ export default async function TransactionsPage() {
 
   return (
     <>
-      return <TransactionList transactionList={transactionList} />;
+      <TransactionList transactionList={transactionList} />;
     </>
   );
 }
