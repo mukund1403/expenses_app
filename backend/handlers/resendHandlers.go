@@ -9,6 +9,7 @@ import (
 	"expenses/openrouter"
 	"fmt"
 	"html"
+	"io"
 	"net/http"
 	"os"
 	"regexp"
@@ -47,6 +48,18 @@ func PostWebhookHandler(ctx context.Context, c *app.RequestContext) {
 	if err := json.Unmarshal(requestBody, &emailMetadata); err != nil {
 		logx.Logger.Error(fmt.Sprintf("failed to decode webhook: %s", err.Error()))
 		c.JSON(400, map[string]string{"error": err.Error()})
+		return
+	}
+
+	if projectName, matched := extractSupabaseProjectName(emailMetadata.Data.Subject); matched {
+		logx.Logger.Info(fmt.Sprintf("detected Supabase pause notification for project %q, attempting to resume", projectName))
+		if err := resumeSupabaseProject(projectName); err != nil {
+			logx.Logger.Error(fmt.Sprintf("failed to resume supabase project: %s", err.Error()))
+			c.JSON(500, map[string]string{"error": err.Error()})
+			return
+		}
+		logx.Logger.Info("supabase project resume triggered successfully")
+		c.JSON(200, map[string]string{"message": "supabase project resume triggered successfully"})
 		return
 	}
 
@@ -198,6 +211,57 @@ func handleNonTransactionEmail(ctx context.Context, emailContent string, user db
 	_, err := db.PutSupabaseUser(ctx, info, &db.SupabaseUser{NonTxEmails: user.NonTxEmails + 1})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+var pauseSubjectRegex = regexp.MustCompile(`^Your Supabase Project (.+?) has been paused\.$`)
+
+func extractSupabaseProjectName(subject string) (string, bool) {
+	matches := pauseSubjectRegex.FindStringSubmatch(subject)
+	if len(matches) < 2 {
+		return "", false
+	}
+	return matches[1], true
+}
+
+func resumeSupabaseProject(projectName string) error {
+	accessToken := os.Getenv("SUPABASE_ACCESS_TOKEN")
+	projectRefsJSON := os.Getenv("SUPABASE_PROJECT_REFS")
+
+	if accessToken == "" || projectRefsJSON == "" {
+		return fmt.Errorf("SUPABASE_ACCESS_TOKEN or SUPABASE_PROJECT_REFS not set")
+	}
+
+	var projectRefs map[string]string
+	if err := json.Unmarshal([]byte(projectRefsJSON), &projectRefs); err != nil {
+		return fmt.Errorf("failed to parse SUPABASE_PROJECT_REFS: %w", err)
+	}
+
+	projectRef, ok := projectRefs[projectName]
+	if !ok {
+		return fmt.Errorf("no project ref configured for project name %q", projectName)
+	}
+
+	restoreURL := fmt.Sprintf("https://api.supabase.com/v1/projects/%s/restore", projectRef)
+
+	req, err := http.NewRequestWithContext(context.Background(), "POST", restoreURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("supabase restore failed: status=%d body=%s", resp.StatusCode, string(body))
 	}
 
 	return nil
