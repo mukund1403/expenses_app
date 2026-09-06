@@ -273,23 +273,33 @@ func ClearEmailQueue() error {
 		return err
 	}
 
+	var failures int
 	for _, email := range failedEmailList {
 		transaction, err := parseEmailBody(email.ReceivedEmail)
 		if err != nil {
-			return err
+			logx.Logger.Error(fmt.Sprintf("failed to parse backlog email %v: %s", email.Id, err.Error()))
+			failures++
+			continue
 		}
 
 		transaction.UserId = email.UserID
-		_, err = db.PostTransaction(*transaction)
-		if err != nil {
-			return err
-		}
-		_, err = db.DeleteFailEmail(email.Id)
-		if err != nil {
-			return err
+		if _, err := db.PostTransaction(*transaction); err != nil {
+			logx.Logger.Error(fmt.Sprintf("failed to post backlog transaction %v: %s", email.Id, err.Error()))
+			failures++
+			continue
 		}
 
-		logx.Logger.Info("backlog transaction sucessfully added")
+		if _, err := db.DeleteFailEmail(email.Id); err != nil {
+			logx.Logger.Error(fmt.Sprintf("failed to delete backlog email %v after posting: %s", email.Id, err.Error()))
+			failures++
+			continue
+		}
+
+		logx.Logger.Info(fmt.Sprintf("backlog transaction successfully added: %v", email.Id))
+	}
+
+	if failures > 0 {
+		logx.Logger.Info(fmt.Sprintf("backlog run finished with %d failures out of %d", failures, len(failedEmailList)))
 	}
 
 	return nil

@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -32,6 +33,44 @@ type OROutput struct {
 	} `json:"choices"`
 }
 
+var fallbackModels = []string{
+	"liquid/lfm-2.5-2.6b:free",
+	"nvidia/nemotron-3.5-lightning:free",
+	"z-ai/glm-5.2:free",
+}
+
+// openRouterFreeTierInterval is the minimum spacing between requests
+// needed to stay under OpenRouter's shared 20-requests-per-minute cap,
+// which applies across ALL :free models on the account combined -
+// not per model. 60s / 20 = 3s minimum; padded slightly for clock
+// drift and safety margin.
+const openRouterFreeTierInterval = 3200 * time.Millisecond
+
+// callThrottler enforces a minimum gap between outgoing OpenRouter
+// requests, shared by every caller in the process - live transaction
+// extraction and backlog processing alike. This matters because both
+// paths draw from the same account-wide rate limit: without a shared
+// throttle, a backlog goroutine pacing itself in isolation has no way
+// to know a live request is about to fire, and vice versa, so either
+// side can get 429'd by the other's traffic.
+type callThrottler struct {
+	mu       sync.Mutex
+	lastCall time.Time
+}
+
+func (c *callThrottler) wait() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	elapsed := time.Since(c.lastCall)
+	if elapsed < openRouterFreeTierInterval {
+		time.Sleep(openRouterFreeTierInterval - elapsed)
+	}
+	c.lastCall = time.Now()
+}
+
+var openRouterThrottle = &callThrottler{}
+
 func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 	apiKey := os.Getenv("OPEN_ROUTER_API_KEY")
 	if apiKey == "" {
@@ -40,43 +79,106 @@ func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 
 	prompt := buildPrompt(plaintext)
 
+	var errs []string
+	for _, model := range fallbackModels {
+		content, err := callModel(apiKey, model, prompt, plaintext)
+		if err == nil {
+			return content, nil
+		}
+		errs = append(errs, fmt.Sprintf("%s: %v", model, err))
+	}
+
+	return "", fmt.Errorf("all fallback models failed: %s", strings.Join(errs, " | "))
+}
+
+// callModel makes a single attempt against one model. Any failure mode
+// that means "this response isn't usable" (non-2xx, undecodable body, no
+// choices returned, or unparsable content even after cleanup) is
+// surfaced as an error so the caller can move on to the next model in
+// the fallback list.
+func callModel(apiKey, model, prompt, plaintext string) (string, error) {
 	reqBody := ORRequest{
-		Model: "nvidia/nemotron-3-nano-30b-a3b:free",
+		Model: model,
 		Messages: []ORMessage{
 			{Role: "system", Content: prompt},
 			{Role: "user", Content: plaintext},
 		},
 	}
 
-	b, _ := json.Marshal(reqBody)
-	req, _ := http.NewRequest("POST", OpenRouterURL, bytes.NewReader(b))
+	b, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("marshal request: %w", err)
+	}
+
+	req, err := http.NewRequest("POST", OpenRouterURL, bytes.NewReader(b))
+	if err != nil {
+		return "", fmt.Errorf("build request: %w", err)
+	}
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 	req.Header.Set("Content-Type", "application/json")
 
+	openRouterThrottle.wait()
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("do request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode >= 400 {
-		return "", fmt.Errorf(
-			"openrouter error %d: %s",
-			resp.StatusCode,
-			string(body),
-		)
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read body: %w", err)
 	}
+
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf("openrouter error %d: %s", resp.StatusCode, string(body))
+	}
+
 	var data OROutput
 	if err := json.Unmarshal(body, &data); err != nil {
-		return "", fmt.Errorf("error decoding json: %s", err.Error())
+		return "", fmt.Errorf("error decoding json: %w", err)
 	}
 
-	if len(data.Choices) == 0 && resp.StatusCode > 400 {
-		return "", fmt.Errorf("no response from model")
+	if len(data.Choices) == 0 {
+		return "", fmt.Errorf("no choices in response")
 	}
 
-	return data.Choices[0].Message.Content, nil
+	content := stripCodeFences(data.Choices[0].Message.Content)
+
+	// The prompt insists on raw JSON, but not every model obeys that
+	// instruction. Validate here rather than trusting it blindly - if
+	// this model's output isn't actually valid JSON even after fence
+	// stripping, treat it as a failed attempt so the caller falls
+	// through to the next model instead of returning unparsable content.
+	if !json.Valid([]byte(content)) {
+		return "", fmt.Errorf("model output is not valid JSON after cleanup: %s", content)
+	}
+
+	return content, nil
+}
+
+// stripCodeFences removes a leading/trailing markdown code fence
+// (```json ... ``` or plain ``` ... ```) if present, since some models
+// wrap JSON output in fences despite being told not to.
+func stripCodeFences(s string) string {
+	s = strings.TrimSpace(s)
+	if !strings.HasPrefix(s, "```") {
+		return s
+	}
+
+	s = strings.TrimPrefix(s, "```")
+	// Drop an optional language tag right after the opening fence, e.g. "json".
+	if nl := strings.IndexByte(s, '\n'); nl != -1 {
+		firstLine := strings.TrimSpace(s[:nl])
+		if firstLine == "" || !strings.ContainsAny(firstLine, "{[\"") {
+			s = s[nl+1:]
+		}
+	}
+
+	s = strings.TrimSpace(s)
+	s = strings.TrimSuffix(s, "```")
+
+	return strings.TrimSpace(s)
 }
 
 func buildPrompt(input string) string {
