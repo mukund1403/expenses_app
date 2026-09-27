@@ -242,8 +242,8 @@ UOB EMAIL DISCLAIMER: Any person receiving this email and any attachment(s) cont
 				if tx.Type != "expense" {
 					t.Errorf("expected expense, got %s", tx.Type)
 				}
-				if tx.Category != "food" {
-					t.Errorf("expected food, got %s", tx.Category)
+				if tx.Category != "food_and_dining" {
+					t.Errorf("expected food_and_dining, got %s", tx.Category)
 				}
 				if tx.Amount != 7.50 {
 					t.Errorf("wrong amount: %v", tx.Amount)
