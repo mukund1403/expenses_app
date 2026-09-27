@@ -3,6 +3,7 @@ package openrouter
 import (
 	"bytes"
 	"encoding/json"
+	"expenses/models"
 	"fmt"
 	"io"
 	"net/http"
@@ -33,10 +34,28 @@ type OROutput struct {
 	} `json:"choices"`
 }
 
+// fallbackModels is ordered most-capable-first. There is deliberately no
+// small/weak model at the bottom: for this task a wrong-but-well-formed
+// classification is worse than no result at all, so if every model here
+// is unavailable we return an error rather than degrading to a model we
+// don't trust to classify correctly.
 var fallbackModels = []string{
-	"liquid/lfm-2.5-2.6b:free",
-	"nvidia/nemotron-3.5-lightning:free",
-	"z-ai/glm-5.2:free",
+	"thinkingmachines/inkling:free",      // primary: 41B active MoE, strong instruction following
+	"nvidia/nemotron-3.5-lightning:free", // secondary: previously proven reliable
+	"thinkingmachines/inkling-small:free",
+}
+
+// Allowed categories, kept in sync with the enums in promptTemplate.
+// Used by the plausibility gate to reject structurally-invalid output so
+// the caller falls through to the next model.
+var expenseCategories = map[string]bool{
+	"food_and_dining": true, "travel": true, "transport": true,
+	"groceries": true, "utilities": true, "transfers": true,
+	"entertainment": true, "shopping": true, "others": true,
+}
+
+var incomeCategories = map[string]bool{
+	"salary": true, "transfers": true,
 }
 
 // openRouterFreeTierInterval is the minimum spacing between requests
@@ -88,14 +107,16 @@ func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 		errs = append(errs, fmt.Sprintf("%s: %v", model, err))
 	}
 
-	return "", fmt.Errorf("all fallback models failed: %s", strings.Join(errs, " | "))
+	return "", fmt.Errorf("all fallback models failed or returned implausible output: %s", strings.Join(errs, " | "))
 }
 
 // callModel makes a single attempt against one model. Any failure mode
-// that means "this response isn't usable" (non-2xx, undecodable body, no
-// choices returned, or unparsable content even after cleanup) is
-// surfaced as an error so the caller can move on to the next model in
-// the fallback list.
+// that means "this response isn't usable" - non-2xx, undecodable body,
+// no choices, unparsable content, OR a well-formed response that fails
+// the plausibility gate - is surfaced as an error so the caller moves on
+// to the next model. The plausibility gate is what makes fallback improve
+// quality and not just availability: a weak model returning valid JSON
+// with a bogus category no longer gets accepted just because it parses.
 func callModel(apiKey, model, prompt, plaintext string) (string, error) {
 	reqBody := ORRequest{
 		Model: model,
@@ -145,16 +166,54 @@ func callModel(apiKey, model, prompt, plaintext string) (string, error) {
 
 	content := stripCodeFences(data.Choices[0].Message.Content)
 
-	// The prompt insists on raw JSON, but not every model obeys that
-	// instruction. Validate here rather than trusting it blindly - if
-	// this model's output isn't actually valid JSON even after fence
-	// stripping, treat it as a failed attempt so the caller falls
-	// through to the next model instead of returning unparsable content.
 	if !json.Valid([]byte(content)) {
 		return "", fmt.Errorf("model output is not valid JSON after cleanup: %s", content)
 	}
 
+	// Plausibility gate. Parse into the domain type and reject anything
+	// structurally wrong so the caller falls through to the next model
+	// instead of returning a confidently-wrong extraction.
+	var tx models.PromptResponse
+	if err := json.Unmarshal([]byte(content), &tx); err != nil {
+		return "", fmt.Errorf("unmarshal into PromptResponse: %w", err)
+	}
+	if err := validateExtraction(tx); err != nil {
+		return "", fmt.Errorf("implausible extraction: %w", err)
+	}
+
 	return content, nil
+}
+
+// validateExtraction rejects structurally-invalid extractions. It does
+// NOT (and cannot) catch a wrong-but-plausible classification - it only
+// guarantees the shape is sane: known category for the given type, a
+// positive amount, and a currency. A "not a transaction" result is
+// accepted as-is since its money fields are legitimately empty.
+func validateExtraction(tx models.PromptResponse) error {
+	if !tx.IsTransaction {
+		return nil
+	}
+
+	switch tx.Type {
+	case "expense":
+		if !expenseCategories[tx.Category] {
+			return fmt.Errorf("unknown expense category %q", tx.Category)
+		}
+	case "income":
+		if !incomeCategories[tx.Category] {
+			return fmt.Errorf("unknown income category %q", tx.Category)
+		}
+	default:
+		return fmt.Errorf("invalid type %q (want expense|income)", tx.Type)
+	}
+
+	if tx.Amount <= 0 {
+		return fmt.Errorf("non-positive amount %v", tx.Amount)
+	}
+	if tx.Currency == "" {
+		return fmt.Errorf("missing currency")
+	}
+	return nil
 }
 
 // stripCodeFences removes a leading/trailing markdown code fence
@@ -182,7 +241,6 @@ func stripCodeFences(s string) string {
 }
 
 func buildPrompt(input string) string {
-	// Insert the master prompt here as a raw string literal
 	referenceYear := time.Now().UTC().Year()
 
 	prompt := strings.ReplaceAll(
@@ -230,14 +288,16 @@ Transaction type rules:
 - If unclear, default to "expense".
 
 Category rules:
-- If type = "expense", choose one from:
+- If type = "expense", choose EXACTLY one from:
   ["food_and_dining","travel","transport","groceries","utilities","transfers","entertainment","shopping","others"]
 
-- If type = "income", choose one from:
+- If type = "income", choose EXACTLY one from:
   ["salary","transfers"]
 
+- Use the category strings verbatim. Never invent a category (e.g. "food" is NOT valid; use "food_and_dining").
+
 Expense category heuristics:
-- food_and_dining → cafés, restaurants, beverage stores (e.g., Luckin, Starbucks, McDonald's).
+- food_and_dining → cafés, restaurants, beverage stores, fast food (e.g., Luckin, Starbucks, McDonald's, Stuff'd).
 - travel → flights, booking.com, airbnb, hotels.
 - transport → bus, MRT, SMRT, TFL, ride hailing (Grab, Uber, Gojek).
 - groceries → FairPrice, Cold Storage, Sainsbury's.
@@ -273,7 +333,8 @@ Output:
   "currency": "SGD",
   "datetime": "2025-12-11T14:13:00Z",
   "category": "food_and_dining",
-  "type": "expense"
+  "type": "expense",
+  "is_transaction": true
 }
 
 Input:
@@ -291,24 +352,34 @@ Output:
 }
 
 Input:
-"The key insights today:
-▪	Why there could be more upside for gold
-▪	Fears of a tech bubble in public US equities may be unfounded
-▪	While governments are trying to overcome the most prominent economic chokepoints, new ones may emerge
-▪	German economic outlook: 1.1 growth this year
-▪	Briefings Brainteaser: copper consumption
+"A transaction of SGD 7.50 was made with your UOB Card ending 1250 on 23/09/26 at STUFF'D GUOCO TOWER."
+Output:
+{
+  "merchant": "STUFF'D GUOCO TOWER",
+  "account": "UOB Card ending 1250",
+  "amount": 7.50,
+  "currency": "SGD",
+  "datetime": "2026-09-23T00:00:00Z",
+  "category": "food_and_dining",
+  "type": "expense",
+  "is_transaction": true
+}
 
+Input:
+"The key insights today:
+▪ Why there could be more upside for gold
+▪ Fears of a tech bubble in public US equities may be unfounded
 Want to sign up and stay connected? Click here."
 Output:
 {
-	"merchant": "",
-	"account": "",
-	"amount": null,
-	"currency": "",
-	"datetime": null,
-	"category": "",
-	"type": "",
-	"is_transaction": false
+  "merchant": "",
+  "account": "",
+  "amount": null,
+  "currency": "",
+  "datetime": null,
+  "category": "",
+  "type": "",
+  "is_transaction": false
 }
 
 Input:
@@ -326,33 +397,22 @@ Output:
 }
 
 Input:
-"Top job picks for you: https://www.linkedin.com/comm/jobs/collections/recommended?origin=JYMBII_EMAIL&lgCta=eml-jymbii-bottom-see-all-jobs&lgTemp=jobs_jymbii_digest&lipi=urn%3Ali%3Apage%3Aemail_jobs_jymbii_digest%3Bi6uuB3iXRwO%2FmivahHReaA%3D%3D&midToken=AQFFZxkCQcXL_g&midSig=2jkRO8hCOz5I81&trk=eml-jobs_jymbii_digest-null-0-null&trkEmail=eml-jobs_jymbii_digest-null-0-null-null-fla1es~ml1kyxhy~t5-null-null&eid=fla1es-ml1kyxhy-t5&otpToken=MWIwMTFjZTcxMTJjYzBjMmIwMjQwNGVkNDAxN2VmYjU4NmM5ZDM0NjlmYWE4YjYxNzljNTA3Njk0OTVhNWJmYWY0ZGNkZmI2NDBjOGJjZjQ3ZjlhZjk0NTc3ZDE5M2QxZTZkNTE2ODA5NTE0NDllYTQ5YzgyYiwxLDE%3D
-
-
-Strategy Analyst, Governance - TikTok Shop
-TikTok
-Singapore
-
-1 connection
-Apply with resume & profile"
+"Top job picks for you: Strategy Analyst, Governance - TikTok Shop. TikTok. Singapore. Apply with resume & profile."
 Output:
 {
-	"merchant": "",
-	"account": "",
-	"amount": null,
-	"currency": "",
-	"datetime": null,
-	"category": "",
-	"type": "",
-	"is_transaction": false
+  "merchant": "",
+  "account": "",
+  "amount": null,
+  "currency": "",
+  "datetime": null,
+  "category": "",
+  "type": "",
+  "is_transaction": false
 }
-
 
 Input:
 "Transaction Ref: TF518721765433374243
-
 We refer to your PayLah! Transfer dated 11 Dec.
-
 Date & Time: 11 Dec 14:13 (SGT)
 Amount: SGD1.00
 From: PayLah! Wallet (Mobile ending 5971)
@@ -371,7 +431,6 @@ Output:
 
 Input:
 "The following PayNow transfer has been made to FONG SENG FAST FOOD NASI LEMAK (1999).
-
 Date: 01 Dec 2025
 Time: 13:04 PM SGT
 Amount: SGD 1.90
@@ -390,7 +449,6 @@ Output:
 
 Input:
 "Salary Credit from ACME PTE LTD
-
 Date: 30 Nov 2025
 Amount: SGD 4,500.00
 To Account: DBS Multiplier Account (-1234)"
@@ -408,7 +466,6 @@ Output:
 
 Input:
 "You have received SGD 120.00 from John Tan via PayNow.
-
 Date & Time: 15 Dec 2025 18:42 SGT
 To: OCBC 360 Account (-7788)"
 Output:

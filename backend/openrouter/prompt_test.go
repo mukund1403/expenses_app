@@ -193,6 +193,67 @@ func TestIntegration_LLMTransactionExtraction(t *testing.T) {
 		// 		}
 		// 	},
 		// },
+
+		{
+			name: "Failed parsing correctly",
+			input: `
+			Transaction Ref: TF679151787905160728
+
+			Dear Sir / Madam,
+			We refer to your PayLah! Transfer dated 28 Aug. We are pleased to confirm that the transaction was completed.
+
+			Date & Time:	28 Aug 16:19 (SGT)
+			Amount:	SGD12.50
+			From:	PayLah! Wallet (Mobile ending 9897)
+			To:	Suhaana (Mobile ending 9629)
+
+			To view your transactions, login to your PayLah! Wallet and select “History” at the bottom bar of the Home page. To manage your PayLah! notifications, select “Settings” then “Manage Notifications”.
+
+			Please call DBS hotline immediately if this was an unauthorised transaction.
+
+			Thank you for banking with us.
+
+			Yours faithfully
+			DBS Bank Ltd
+		`,
+			check: func(t *testing.T, tx models.PromptResponse) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
+				if tx.Category != "transfers" {
+					t.Errorf("expected transfers, got %s", tx.Category)
+				}
+				if tx.Amount != 12.50 {
+					t.Errorf("wrong amount: %v", tx.Amount)
+				}
+				if tx.Merchant != "Suhaana" {
+					t.Errorf("wrong merchant: %v", tx.Merchant)
+				}
+			},
+		},
+
+		{
+			name: "Correct categorisation",
+			input: `
+			A transaction of SGD 7.50 was made with your UOB Card ending 1250 on 23/09/26 at STUFF'D GUOCO TOWER. If unauthorised, call 24/7 Fraud Hotline now
+UOB EMAIL DISCLAIMER: Any person receiving this email and any attachment(s) contained, shall treat the information as confidential and not misuse, copy, disclose, distribute or retain the information in any way that amounts to a breach of confidentiality. If you are not the intended recipient, please delete all copies of this email from your computer system. As the integrity of this message cannot be guaranteed, neither UOB nor any entity in the UOB Group shall be responsible for the contents. Any opinion in this email may not necessarily represent the opinion of UOB or any entity in the UOB Group.
+		`,
+			check: func(t *testing.T, tx models.PromptResponse) {
+				if tx.Type != "expense" {
+					t.Errorf("expected expense, got %s", tx.Type)
+				}
+				if tx.Category != "food" {
+					t.Errorf("expected food, got %s", tx.Category)
+				}
+				if tx.Amount != 7.50 {
+					t.Errorf("wrong amount: %v", tx.Amount)
+				}
+				if tx.Merchant != "STUFF'D GUOCO TOWER" {
+					t.Errorf("wrong merchant: %v", tx.Merchant)
+				}
+			},
+		},
+
 		{
 			name: "Not a transaction",
 			input: `Hi Jon
