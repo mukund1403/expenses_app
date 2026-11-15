@@ -1,11 +1,9 @@
 import { ElementType } from 'react';
 import { SvgIconProps } from '@mui/material';
 import {
-  HomeRounded,
   ReceiptRounded,
   DirectionsCarFilledRounded,
   LocalDiningRounded,
-  LocalHospitalRounded, // keep for any existing use
   FlightRounded,
   ShoppingCartRounded,
   WorkRounded,
