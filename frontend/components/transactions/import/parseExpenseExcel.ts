@@ -25,8 +25,66 @@ export function getPersonColumns(headerRow: string[]): string[] {
 }
 
 /**
- * Parses an Excel date value (string in DD/MM/YYYY format, or Excel serial number)
- * into an ISO8601 string. Returns null if unparseable.
+ * Returns true if the buffer is a binary spreadsheet (XLSX/XLSM/ODS are zip
+ * archives starting with "PK"; legacy XLS is an OLE2 file starting with D0 CF 11 E0).
+ * Anything else is treated as delimited text (CSV).
+ */
+function isBinarySpreadsheet(buffer: ArrayBuffer): boolean {
+  const b = new Uint8Array(buffer, 0, Math.min(4, buffer.byteLength));
+  const isZip = b[0] === 0x50 && b[1] === 0x4b;
+  const isOle2 =
+    b[0] === 0xd0 && b[1] === 0xcf && b[2] === 0x11 && b[3] === 0xe0;
+  return isZip || isOle2;
+}
+
+/**
+ * Reads the first sheet of an uploaded file (Excel or CSV) into a 2D array of cells.
+ *
+ * CSV is read with `raw: true` so SheetJS keeps every cell as the literal string
+ * from the file. Without it, SheetJS guesses types and reads ambiguous dates like
+ * "03/04/2024" as US month-first, which would silently swap day and month.
+ * The date and amount parsers below already handle string cells.
+ */
+function readRows(buffer: ArrayBuffer): unknown[][] {
+  const workbook = isBinarySpreadsheet(buffer)
+    ? XLSX.read(buffer, { type: 'array', cellDates: false })
+    : XLSX.read(new TextDecoder('utf-8').decode(buffer), {
+        type: 'string',
+        raw: true,
+      });
+
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  return XLSX.utils.sheet_to_json(sheet, {
+    header: 1,
+    raw: true,
+    defval: '',
+  });
+}
+
+/**
+ * Builds a local-midnight date and returns it as ISO8601, or null if the
+ * components don't form a real calendar date (e.g. 31/02/2024).
+ */
+function toIsoDate(year: number, month: number, day: number): string | null {
+  if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+  const date = new Date(year, month - 1, day);
+  if (
+    isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  return date.toISOString();
+}
+
+/**
+ * Parses a date cell into an ISO8601 string. Supports:
+ *  - Excel serial date numbers (XLSX)
+ *  - "DD/MM/YYYY" or "D/M/YY" strings (XLSX text cells, CSVs re-saved by Excel)
+ *  - "YYYY-MM-DD" strings (Splitwise CSV export)
+ * Returns null if unparseable.
  */
 function parseExcelDate(value: unknown): string | null {
   if (value === null || value === undefined || value === '') return null;
@@ -35,18 +93,24 @@ function parseExcelDate(value: unknown): string | null {
   if (typeof value === 'number') {
     const parsed = XLSX.SSF.parse_date_code(value);
     if (!parsed) return null;
-    const date = new Date(parsed.y, parsed.m - 1, parsed.d);
-    return isNaN(date.getTime()) ? null : date.toISOString();
+    return toIsoDate(parsed.y, parsed.m, parsed.d);
   }
 
-  // String in DD/MM/YYYY format
   if (typeof value === 'string') {
-    const parts = value.split('/');
+    const trimmed = value.trim();
+
+    // YYYY-MM-DD (optionally followed by a time component, which is ignored)
+    const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(trimmed);
+    if (iso) {
+      return toIsoDate(Number(iso[1]), Number(iso[2]), Number(iso[3]));
+    }
+
+    // DD/MM/YYYY or D/M/YY (two-digit years are treated as 20YY)
+    const parts = trimmed.split('/');
     if (parts.length !== 3) return null;
-    const [day, month, year] = parts.map((p) => parseInt(p, 10));
-    if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
-    const date = new Date(year, month - 1, day);
-    return isNaN(date.getTime()) ? null : date.toISOString();
+    const [day, month, rawYear] = parts.map((p) => parseInt(p, 10));
+    const year = parts[2].trim().length <= 2 ? 2000 + rawYear : rawYear;
+    return toIsoDate(year, month, day);
   }
 
   return null;
@@ -69,7 +133,7 @@ export interface ParseExpenseExcelOptions {
 }
 
 /**
- * Parses an uploaded expense-splitting Excel file into draft Transactions
+ * Parses an uploaded expense-splitting file (Excel or CSV) into draft Transactions
  * for the selected person, including only rows where they owe money
  * (negative value in their column) on or after the given date.
  */
@@ -80,15 +144,7 @@ export function parseExpenseExcel(
   const { selectedPerson, fromDate, account } = options;
   const errors: string[] = [];
 
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
-  const firstSheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[firstSheetName];
-
-  const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,
-    raw: true,
-    defval: '',
-  });
+  const rows = readRows(buffer);
 
   const headerIndex = findHeaderRowIndex(rows);
   if (headerIndex === -1) {
@@ -117,7 +173,10 @@ export function parseExpenseExcel(
 
   for (let i = headerIndex + 1; i < rows.length; i++) {
     const row = rows[i];
-    if (!row || row.every((cell) => cell === '' || cell === undefined)) {
+    if (
+      !row ||
+      row.every((cell) => cell === undefined || String(cell).trim() === '')
+    ) {
       continue; // skip blank rows
     }
 
@@ -186,20 +245,12 @@ export function parseExpenseExcel(
 }
 
 /**
- * Quickly reads just the header row of an uploaded Excel file to extract
+ * Quickly reads just the header row of an uploaded file (Excel or CSV) to extract
  * the list of person columns, without parsing all transaction rows.
  * Used to populate the "Which person are you?" dropdown immediately after upload.
  */
 export function getPersonOptionsFromExcel(buffer: ArrayBuffer): string[] {
-  const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
-  const firstSheetName = workbook.SheetNames[0];
-  const sheet = workbook.Sheets[firstSheetName];
-
-  const rows: unknown[][] = XLSX.utils.sheet_to_json(sheet, {
-    header: 1,
-    raw: true,
-    defval: '',
-  });
+  const rows = readRows(buffer);
 
   const headerIndex = findHeaderRowIndex(rows);
   if (headerIndex === -1) return [];

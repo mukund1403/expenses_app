@@ -3,6 +3,7 @@ package openrouter
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"expenses/models"
 	"fmt"
 	"io"
@@ -39,10 +40,17 @@ type OROutput struct {
 // classification is worse than no result at all, so if every model here
 // is unavailable we return an error rather than degrading to a model we
 // don't trust to classify correctly.
+//
+// thinkingmachines/inkling:free and inkling-small:free were removed: OpenRouter
+// now returns 404 "unavailable for free" for both (paid slugs drop ":free").
+// Any model that 404s at runtime is also skipped automatically for the rest
+// of the process (see unavailableModels), so a stale entry here costs at most
+// one request per restart.
 var fallbackModels = []string{
-	"thinkingmachines/inkling:free",      // primary: 41B active MoE, strong instruction following
-	"nvidia/nemotron-3.5-lightning:free", // secondary: previously proven reliable
-	"thinkingmachines/inkling-small:free",
+	"nvidia/nemotron-3.5-lightning:free", // previously proven reliable
+	"nvidia/nemotron-3-ultra-550b-a55b:free",
+	"baidu/ernie-5.5-flash-preview:free",
+	"inclusionai/ling-3.2-flash:free",
 }
 
 // Allowed categories, kept in sync with the enums in promptTemplate.
@@ -90,24 +98,170 @@ func (c *callThrottler) wait() {
 
 var openRouterThrottle = &callThrottler{}
 
+// RateLimitError means OpenRouter itself (not an upstream provider) rejected
+// the request because an account-wide free-tier limit was hit. Because that
+// limit is shared by every :free model, trying another model can't succeed
+// and would still count against the daily quota (failed attempts count), so
+// callers should stop and retry after ResetAt.
+type RateLimitError struct {
+	ResetAt time.Time
+	Source  string // e.g. "openrouter_free_tier_daily"
+}
+
+func (e *RateLimitError) Error() string {
+	return fmt.Sprintf("openrouter rate limited (%s) until %s",
+		e.Source, e.ResetAt.Format(time.RFC3339))
+}
+
+// IsRateLimited reports whether err is (or wraps) a RateLimitError and, if
+// so, when it is safe to try again. Callers processing a backlog should use
+// this to pause and keep the email queued rather than marking it failed.
+func IsRateLimited(err error) (time.Time, bool) {
+	var rl *RateLimitError
+	if errors.As(err, &rl) {
+		return rl.ResetAt, true
+	}
+	return time.Time{}, false
+}
+
+// rateLimitGate is a process-wide circuit breaker. Once OpenRouter reports
+// an account-level rate limit, every call short-circuits locally until the
+// reset time, without sending a request - so a backlog loop that keeps
+// calling us can't burn quota or hold throttle slots while we're locked out.
+type rateLimitGate struct {
+	mu     sync.Mutex
+	until  time.Time
+	source string
+}
+
+func (g *rateLimitGate) check() error {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if time.Now().Before(g.until) {
+		return &RateLimitError{ResetAt: g.until, Source: g.source}
+	}
+	return nil
+}
+
+func (g *rateLimitGate) trip(e *RateLimitError) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	if e.ResetAt.After(g.until) {
+		g.until = e.ResetAt
+		g.source = e.Source
+	}
+}
+
+var openRouterGate = &rateLimitGate{}
+
+// errModelUnavailable marks a 404 from OpenRouter, e.g. a :free variant that
+// has been withdrawn. Such models are skipped for the rest of the process.
+var errModelUnavailable = errors.New("model unavailable")
+
+var unavailableModels sync.Map // model slug -> true
+
 func ExtractUnknownBankTransaction(plaintext string) (string, error) {
 	apiKey := os.Getenv("OPEN_ROUTER_API_KEY")
 	if apiKey == "" {
 		return "", fmt.Errorf("OPEN_ROUTER_API_KEY not set")
 	}
 
+	// Locked out: fail fast without spending a request or a throttle slot.
+	if err := openRouterGate.check(); err != nil {
+		return "", err
+	}
+
 	prompt := buildPrompt(plaintext)
 
 	var errs []string
 	for _, model := range fallbackModels {
+		if _, dead := unavailableModels.Load(model); dead {
+			continue
+		}
+
 		content, err := callModel(apiKey, model, prompt, plaintext)
 		if err == nil {
 			return content, nil
 		}
+
+		// Account-wide limit: every other :free model would fail the same way.
+		var rl *RateLimitError
+		if errors.As(err, &rl) {
+			openRouterGate.trip(rl)
+			return "", err
+		}
+
+		if errors.Is(err, errModelUnavailable) {
+			unavailableModels.Store(model, true)
+		}
 		errs = append(errs, fmt.Sprintf("%s: %v", model, err))
 	}
 
+	if len(errs) == 0 {
+		return "", fmt.Errorf("no usable models: every entry in fallbackModels has returned 404 this run; update the list")
+	}
 	return "", fmt.Errorf("all fallback models failed or returned implausible output: %s", strings.Join(errs, " | "))
+}
+
+// orErrorBody is the subset of OpenRouter's error payload we inspect.
+type orErrorBody struct {
+	Error struct {
+		Message  string `json:"message"`
+		Metadata struct {
+			Headers      map[string]any `json:"headers"`
+			LimitSource  string         `json:"limit_source"`
+			ProviderName *string        `json:"provider_name"`
+		} `json:"metadata"`
+	} `json:"error"`
+}
+
+// parseRateLimit inspects a 429 response. It returns a RateLimitError when
+// the limit is OpenRouter's own (shared across models), or nil when an
+// upstream provider throttled this one model - in which case falling back to
+// a different model is still worthwhile.
+func parseRateLimit(header http.Header, body []byte) *RateLimitError {
+	var eb orErrorBody
+	_ = json.Unmarshal(body, &eb) // best effort; an unknown shape is treated as account-level below
+	md := eb.Error.Metadata
+
+	if md.ProviderName != nil && *md.ProviderName != "" {
+		return nil // upstream provider limit: other models may work
+	}
+
+	source := md.LimitSource
+	if source == "" {
+		source = "openrouter"
+	}
+
+	// X-RateLimit-Reset is a Unix timestamp in ms. Prefer the real response
+	// header; OpenRouter also echoes it inside error.metadata.headers.
+	raw := header.Get("X-RateLimit-Reset")
+	if raw == "" {
+		if v, ok := md.Headers["X-RateLimit-Reset"]; ok {
+			raw = fmt.Sprint(v)
+		}
+	}
+
+	var resetAt time.Time
+	if n, err := strconv.ParseInt(strings.TrimSpace(raw), 10, 64); err == nil && n > 0 {
+		if n > 1e12 { // milliseconds
+			resetAt = time.UnixMilli(n)
+		} else { // seconds
+			resetAt = time.Unix(n, 0)
+		}
+	}
+
+	if resetAt.IsZero() || resetAt.Before(time.Now()) {
+		if strings.Contains(source, "daily") {
+			// Daily free-tier quota resets at 00:00 UTC.
+			now := time.Now().UTC()
+			resetAt = time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, time.UTC)
+		} else {
+			resetAt = time.Now().Add(time.Minute) // per-minute limit
+		}
+	}
+
+	return &RateLimitError{ResetAt: resetAt, Source: source}
 }
 
 // callModel makes a single attempt against one model. Any failure mode
@@ -140,6 +294,11 @@ func callModel(apiKey, model, prompt, plaintext string) (string, error) {
 
 	openRouterThrottle.wait()
 
+	// Another goroutine may have tripped the gate while we waited our turn.
+	if err := openRouterGate.check(); err != nil {
+		return "", err
+	}
+
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("do request: %w", err)
@@ -151,7 +310,15 @@ func callModel(apiKey, model, prompt, plaintext string) (string, error) {
 		return "", fmt.Errorf("read body: %w", err)
 	}
 
-	if resp.StatusCode >= 400 {
+	switch {
+	case resp.StatusCode == http.StatusTooManyRequests:
+		if rl := parseRateLimit(resp.Header, body); rl != nil {
+			return "", rl
+		}
+		return "", fmt.Errorf("openrouter error 429 (upstream provider): %s", string(body))
+	case resp.StatusCode == http.StatusNotFound:
+		return "", fmt.Errorf("%w: openrouter error 404: %s", errModelUnavailable, string(body))
+	case resp.StatusCode >= 400:
 		return "", fmt.Errorf("openrouter error %d: %s", resp.StatusCode, string(body))
 	}
 

@@ -207,7 +207,7 @@ func LogoutHandler(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	logx.Logger.Info("user logged out successfully")
-	c.Redirect(302, []byte(frontend+"/login"))
+	c.Redirect(302, []byte(frontend+"/"))
 }
 
 // fetchGoogleUserInfo calls Google userinfo endpoint and returns minimal info

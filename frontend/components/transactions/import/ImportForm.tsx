@@ -10,15 +10,14 @@ import {
   Select,
   FormControl,
   InputLabel,
-  Avatar,
   IconButton,
   Alert,
   Stack,
   CircularProgress,
 } from '@mui/material';
+import { Dayjs } from 'dayjs';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
 import { DeleteRounded, UploadFileRounded } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import {
@@ -60,7 +59,10 @@ export default function ImportForm() {
       setPersonOptions(options);
       setSelectedPerson('');
     } catch (err) {
-      showSnackbar('Failed to read spreadsheet.', 'error');
+      showSnackbar(
+        'Failed to read spreadsheet.',
+        err instanceof Error ? 'error' : 'info',
+      );
     }
   };
 
@@ -80,7 +82,10 @@ export default function ImportForm() {
         showSnackbar('No matching transactions found.', 'info');
       }
     } catch (err) {
-      showSnackbar('Failed to parse spreadsheet.', 'error');
+      showSnackbar(
+        'Failed to parse spreadsheet.',
+        err instanceof Error ? 'error' : 'info',
+      );
     } finally {
       setIsParsing(false);
     }
@@ -171,7 +176,7 @@ export default function ImportForm() {
           Choose file
           <input
             type='file'
-            accept='.xlsx,.xls'
+            accept='.xlsx,.xls,.csv'
             hidden
             onChange={handleFileChange}
           />
