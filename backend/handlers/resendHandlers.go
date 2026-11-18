@@ -15,6 +15,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/jaytaylor/html2text"
@@ -268,16 +270,59 @@ func resumeSupabaseProject(projectName string) error {
 	return nil
 }
 
+// backlogDailyLimit caps how many backlog emails are sent to the model per
+// UTC day (OpenRouter's free quota resets at 00:00 UTC), so the backlog
+// can't eat the allowance live transactions need. The count lives in memory
+// and resets if the server restarts.
+const backlogDailyLimit = 10
+
+var backlogBudget struct {
+	mu   sync.Mutex
+	day  string // UTC date, "2006-01-02"
+	used int
+}
+
+// takeBacklogBudget reserves one backlog slot for today, returning false
+// once the daily limit has been reached.
+func takeBacklogBudget() bool {
+	backlogBudget.mu.Lock()
+	defer backlogBudget.mu.Unlock()
+
+	today := time.Now().UTC().Format("2006-01-02")
+	if backlogBudget.day != today {
+		backlogBudget.day = today
+		backlogBudget.used = 0
+	}
+	if backlogBudget.used >= backlogDailyLimit {
+		return false
+	}
+	backlogBudget.used++
+	return true
+}
+
 func ClearEmailQueue() error {
 	failedEmailList, err := db.GetFailEmailList()
 	if err != nil {
 		return err
 	}
 
-	var failures int
+	var processed, cleared, failures int
 	for _, email := range failedEmailList {
+		if !takeBacklogBudget() {
+			logx.Logger.Info(fmt.Sprintf("backlog daily limit (%d) reached; leaving the rest for tomorrow", backlogDailyLimit))
+			break
+		}
+		processed++
+
 		transaction, err := parseEmailBody(email.ReceivedEmail)
 		if err != nil {
+			// Locked out by OpenRouter: every remaining email would fail the
+			// same way, so stop and leave them queued.
+			if resetAt, ok := openrouter.IsRateLimited(err); ok {
+				logx.Logger.Info(fmt.Sprintf("backlog paused: OpenRouter rate limited until %s", resetAt.Format(time.RFC3339)))
+				failures++
+				break
+			}
 			logx.Logger.Error(fmt.Sprintf("failed to parse backlog email %v: %s", email.Id, err.Error()))
 			failures++
 			continue
@@ -301,6 +346,7 @@ func ClearEmailQueue() error {
 			failures++
 			continue
 		}
+		cleared++
 
 		if duplicate {
 			logx.Logger.Info(fmt.Sprintf("backlog transaction already existed, removed from queue: %v", email.Id))
@@ -309,8 +355,9 @@ func ClearEmailQueue() error {
 		}
 	}
 
-	if failures > 0 {
-		logx.Logger.Info(fmt.Sprintf("backlog run finished with %d failures out of %d", failures, len(failedEmailList)))
+	if processed > 0 {
+		logx.Logger.Info(fmt.Sprintf("backlog run: processed %d, cleared %d, failed %d, %d still queued",
+			processed, cleared, failures, len(failedEmailList)-cleared))
 	}
 
 	return nil
