@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"expenses/db"
 	"expenses/logx"
 	"expenses/models"
@@ -283,10 +284,16 @@ func ClearEmailQueue() error {
 		}
 
 		transaction.UserId = email.UserID
+		duplicate := false
 		if _, err := db.PostTransaction(*transaction); err != nil {
-			logx.Logger.Error(fmt.Sprintf("failed to post backlog transaction %v: %s", email.Id, err.Error()))
-			failures++
-			continue
+			if !errors.Is(err, db.ErrDuplicateTransaction) {
+				logx.Logger.Error(fmt.Sprintf("failed to post backlog transaction %v: %s", email.Id, err.Error()))
+				failures++
+				continue
+			}
+			// Already recorded (e.g. by an earlier run): nothing to retry, so
+			// fall through and clear it from the queue.
+			duplicate = true
 		}
 
 		if _, err := db.DeleteFailEmail(email.Id); err != nil {
@@ -295,7 +302,11 @@ func ClearEmailQueue() error {
 			continue
 		}
 
-		logx.Logger.Info(fmt.Sprintf("backlog transaction successfully added: %v", email.Id))
+		if duplicate {
+			logx.Logger.Info(fmt.Sprintf("backlog transaction already existed, removed from queue: %v", email.Id))
+		} else {
+			logx.Logger.Info(fmt.Sprintf("backlog transaction successfully added: %v", email.Id))
+		}
 	}
 
 	if failures > 0 {
