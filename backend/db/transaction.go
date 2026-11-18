@@ -11,6 +11,18 @@ import (
 	"net/http"
 )
 
+// ErrDuplicateTransaction means the row already exists (Postgres unique
+// violation, e.g. the unique_transaction constraint on merchant/datetime/amount).
+var ErrDuplicateTransaction = errors.New("transaction already exists")
+
+// isUniqueViolation reports whether a PostgREST error body is Postgres 23505.
+func isUniqueViolation(body []byte) bool {
+	var pgErr struct {
+		Code string `json:"code"`
+	}
+	return json.Unmarshal(body, &pgErr) == nil && pgErr.Code == "23505"
+}
+
 func GetTransactionList(userID string) ([]models.Transaction, error) {
 	supabaseURL, supabaseKey, err := initSupabaseEnv()
 	if err != nil {
@@ -69,6 +81,9 @@ func PostTransaction(transaction models.Transaction) (*models.Transaction, error
 
 	if resp2.StatusCode < 200 || resp2.StatusCode >= 300 {
 		body2, _ := io.ReadAll(resp2.Body)
+		if resp2.StatusCode == http.StatusConflict && isUniqueViolation(body2) {
+			return nil, fmt.Errorf("%w: %s", ErrDuplicateTransaction, string(body2))
+		}
 		return nil, fmt.Errorf("supabase create transaction failed: status=%d body=%s", resp2.StatusCode, string(body2))
 	}
 
